@@ -6,16 +6,16 @@ from LINGVA_CALCVLI_LEXER import tokens
 # '@' marks a terminal expression
 
 def p_main(p):
-    'main : FILE_BEGINNING statement_list FILE_END'
-    p[0] = p[2]
+    '''statement_list : FILE_BEGINNING statement
+                      | statement_list FILE_END'''
+    if p[1] == "IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI":
+        p[0] = [p[2]]
+    else:
+        p[0] = p[1]
 
 def p_statement_list(p):
-    '''statement_list : statement
-                      | statement_list statement_list'''
-    if len(p) > 2:
-        p[0] = p[1] + p[2]
-    else:
-        p[0] = [p[1]]
+    '''statement_list : statement_list statement'''
+    p[0] = p[1] + [p[2]]
 
 def p_print_statement(p):
     'statement : PRINT expression'
@@ -109,6 +109,6 @@ s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 # (3 * 4) + (3 / 4)
 # should return 12.75
 result = parser.parse(s)
-print(result)
+#print(result)
 for ele in result:
     print(ele)
