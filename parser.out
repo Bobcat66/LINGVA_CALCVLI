@@ -11,19 +11,17 @@ Unused terminals:
     DECLARE_VAR
     DECREMENT
     DELETE_ELE
-    END
     INCREMENT
     LENGTH
     RETRIEVE_ELE
-    THEN
     WHILE
 
 Grammar
 
-Rule 0     S' -> statement_list
-Rule 1     statement_list -> FILE_BEGINNING statement
-Rule 2     statement_list -> statement_list FILE_END
-Rule 3     statement_list -> statement_list statement
+Rule 0     S' -> main
+Rule 1     main -> FILE_BEGINNING statement
+Rule 2     main -> main FILE_END
+Rule 3     main -> main statement
 Rule 4     statement -> PRINT expression
 Rule 5     expression -> PROMPT expression
 Rule 6     expression -> STRING
@@ -43,7 +41,13 @@ Rule 19    expression -> GREATER expression expression
 Rule 20    expression -> GREATER_OR_EQUAL expression expression
 Rule 21    expression -> LESSER expression expression
 Rule 22    expression -> LESSER_OR_EQUAL expression expression
-Rule 23    statement -> IF
+Rule 23    if_statement -> IF expression statement_list
+Rule 24    if_statement -> if_statement ELIF expression statement_list
+Rule 25    if_statement -> if_statement ELSE statement_list
+Rule 26    statement -> if_statement END_LOOP
+Rule 27    statement_list -> THEN statement
+Rule 28    statement_list -> statement_list END
+Rule 29    statement_list -> statement_list statement
 
 Terminals, with rules where they appear
 
@@ -60,7 +64,10 @@ DECLARE_VAR          :
 DECREMENT            : 
 DELETE_ELE           : 
 DIVIDE               : 13
-END                  : 
+ELIF                 : 24
+ELSE                 : 25
+END                  : 28
+END_LOOP             : 26
 EQUALS               : 18
 FILE_BEGINNING       : 1
 FILE_END             : 2
@@ -81,73 +88,83 @@ PROMPT               : 5
 RETRIEVE_ELE         : 
 STRING               : 6
 SUBTRACT             : 11
-THEN                 : 
+THEN                 : 27
 WHILE                : 
 XOR                  : 16
 error                : 
 
 Nonterminals, with rules where they appear
 
-expression           : 4 5 10 10 11 11 12 12 13 13 14 14 15 15 16 16 17 18 18 19 19 20 20 21 21 22 22
-statement            : 1 3
-statement_list       : 2 3 0
+expression           : 4 5 10 10 11 11 12 12 13 13 14 14 15 15 16 16 17 18 18 19 19 20 20 21 21 22 22 23 24
+if_statement         : 24 25 26
+main                 : 2 3 0
+statement            : 1 3 27 29
+statement_list       : 23 24 25 28 29
 
 Parsing method: LALR
 
 state 0
 
-    (0) S' -> . statement_list
-    (1) statement_list -> . FILE_BEGINNING statement
-    (2) statement_list -> . statement_list FILE_END
-    (3) statement_list -> . statement_list statement
+    (0) S' -> . main
+    (1) main -> . FILE_BEGINNING statement
+    (2) main -> . main FILE_END
+    (3) main -> . main statement
 
     FILE_BEGINNING  shift and go to state 2
 
-    statement_list                 shift and go to state 1
+    main                           shift and go to state 1
 
 state 1
 
-    (0) S' -> statement_list .
-    (2) statement_list -> statement_list . FILE_END
-    (3) statement_list -> statement_list . statement
+    (0) S' -> main .
+    (2) main -> main . FILE_END
+    (3) main -> main . statement
     (4) statement -> . PRINT expression
-    (23) statement -> . IF
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
 
     FILE_END        shift and go to state 3
     PRINT           shift and go to state 5
-    IF              shift and go to state 6
+    IF              shift and go to state 7
 
     statement                      shift and go to state 4
+    if_statement                   shift and go to state 6
 
 state 2
 
-    (1) statement_list -> FILE_BEGINNING . statement
+    (1) main -> FILE_BEGINNING . statement
     (4) statement -> . PRINT expression
-    (23) statement -> . IF
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
 
     PRINT           shift and go to state 5
-    IF              shift and go to state 6
+    IF              shift and go to state 7
 
-    statement                      shift and go to state 7
+    statement                      shift and go to state 8
+    if_statement                   shift and go to state 6
 
 state 3
 
-    (2) statement_list -> statement_list FILE_END .
+    (2) main -> main FILE_END .
 
-    FILE_END        reduce using rule 2 (statement_list -> statement_list FILE_END .)
-    PRINT           reduce using rule 2 (statement_list -> statement_list FILE_END .)
-    IF              reduce using rule 2 (statement_list -> statement_list FILE_END .)
-    $end            reduce using rule 2 (statement_list -> statement_list FILE_END .)
+    FILE_END        reduce using rule 2 (main -> main FILE_END .)
+    PRINT           reduce using rule 2 (main -> main FILE_END .)
+    IF              reduce using rule 2 (main -> main FILE_END .)
+    $end            reduce using rule 2 (main -> main FILE_END .)
 
 
 state 4
 
-    (3) statement_list -> statement_list statement .
+    (3) main -> main statement .
 
-    FILE_END        reduce using rule 3 (statement_list -> statement_list statement .)
-    PRINT           reduce using rule 3 (statement_list -> statement_list statement .)
-    IF              reduce using rule 3 (statement_list -> statement_list statement .)
-    $end            reduce using rule 3 (statement_list -> statement_list statement .)
+    FILE_END        reduce using rule 3 (main -> main statement .)
+    PRINT           reduce using rule 3 (main -> main statement .)
+    IF              reduce using rule 3 (main -> main statement .)
+    $end            reduce using rule 3 (main -> main statement .)
 
 
 state 5
@@ -172,48 +189,92 @@ state 5
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 8
+    expression                     shift and go to state 9
 
 state 6
 
-    (23) statement -> IF .
+    (26) statement -> if_statement . END_LOOP
+    (24) if_statement -> if_statement . ELIF expression statement_list
+    (25) if_statement -> if_statement . ELSE statement_list
 
-    FILE_END        reduce using rule 23 (statement -> IF .)
-    PRINT           reduce using rule 23 (statement -> IF .)
-    IF              reduce using rule 23 (statement -> IF .)
-    $end            reduce using rule 23 (statement -> IF .)
+    END_LOOP        shift and go to state 28
+    ELIF            shift and go to state 29
+    ELSE            shift and go to state 30
 
 
 state 7
 
-    (1) statement_list -> FILE_BEGINNING statement .
+    (23) if_statement -> IF . expression statement_list
+    (5) expression -> . PROMPT expression
+    (6) expression -> . STRING
+    (7) expression -> . NUMBER
+    (8) expression -> . BOOLEAN
+    (9) expression -> . ID
+    (10) expression -> . ADD expression expression
+    (11) expression -> . SUBTRACT expression expression
+    (12) expression -> . MULTIPLY expression expression
+    (13) expression -> . DIVIDE expression expression
+    (14) expression -> . AND expression expression
+    (15) expression -> . OR expression expression
+    (16) expression -> . XOR expression expression
+    (17) expression -> . NOT expression
+    (18) expression -> . EQUALS expression expression
+    (19) expression -> . GREATER expression expression
+    (20) expression -> . GREATER_OR_EQUAL expression expression
+    (21) expression -> . LESSER expression expression
+    (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    FILE_END        reduce using rule 1 (statement_list -> FILE_BEGINNING statement .)
-    PRINT           reduce using rule 1 (statement_list -> FILE_BEGINNING statement .)
-    IF              reduce using rule 1 (statement_list -> FILE_BEGINNING statement .)
-    $end            reduce using rule 1 (statement_list -> FILE_BEGINNING statement .)
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
+    expression                     shift and go to state 31
 
 state 8
+
+    (1) main -> FILE_BEGINNING statement .
+
+    FILE_END        reduce using rule 1 (main -> FILE_BEGINNING statement .)
+    PRINT           reduce using rule 1 (main -> FILE_BEGINNING statement .)
+    IF              reduce using rule 1 (main -> FILE_BEGINNING statement .)
+    $end            reduce using rule 1 (main -> FILE_BEGINNING statement .)
+
+
+state 9
 
     (4) statement -> PRINT expression .
 
@@ -221,9 +282,13 @@ state 8
     PRINT           reduce using rule 4 (statement -> PRINT expression .)
     IF              reduce using rule 4 (statement -> PRINT expression .)
     $end            reduce using rule 4 (statement -> PRINT expression .)
+    END             reduce using rule 4 (statement -> PRINT expression .)
+    END_LOOP        reduce using rule 4 (statement -> PRINT expression .)
+    ELIF            reduce using rule 4 (statement -> PRINT expression .)
+    ELSE            reduce using rule 4 (statement -> PRINT expression .)
 
 
-state 9
+state 10
 
     (5) expression -> PROMPT . expression
     (5) expression -> . PROMPT expression
@@ -245,28 +310,28 @@ state 9
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 27
+    expression                     shift and go to state 32
 
-state 10
+state 11
 
     (6) expression -> STRING .
 
@@ -274,6 +339,11 @@ state 10
     PRINT           reduce using rule 6 (expression -> STRING .)
     IF              reduce using rule 6 (expression -> STRING .)
     $end            reduce using rule 6 (expression -> STRING .)
+    END             reduce using rule 6 (expression -> STRING .)
+    END_LOOP        reduce using rule 6 (expression -> STRING .)
+    ELIF            reduce using rule 6 (expression -> STRING .)
+    ELSE            reduce using rule 6 (expression -> STRING .)
+    THEN            reduce using rule 6 (expression -> STRING .)
     PROMPT          reduce using rule 6 (expression -> STRING .)
     STRING          reduce using rule 6 (expression -> STRING .)
     NUMBER          reduce using rule 6 (expression -> STRING .)
@@ -294,7 +364,7 @@ state 10
     LESSER_OR_EQUAL reduce using rule 6 (expression -> STRING .)
 
 
-state 11
+state 12
 
     (7) expression -> NUMBER .
 
@@ -302,6 +372,11 @@ state 11
     PRINT           reduce using rule 7 (expression -> NUMBER .)
     IF              reduce using rule 7 (expression -> NUMBER .)
     $end            reduce using rule 7 (expression -> NUMBER .)
+    END             reduce using rule 7 (expression -> NUMBER .)
+    END_LOOP        reduce using rule 7 (expression -> NUMBER .)
+    ELIF            reduce using rule 7 (expression -> NUMBER .)
+    ELSE            reduce using rule 7 (expression -> NUMBER .)
+    THEN            reduce using rule 7 (expression -> NUMBER .)
     PROMPT          reduce using rule 7 (expression -> NUMBER .)
     STRING          reduce using rule 7 (expression -> NUMBER .)
     NUMBER          reduce using rule 7 (expression -> NUMBER .)
@@ -322,7 +397,7 @@ state 11
     LESSER_OR_EQUAL reduce using rule 7 (expression -> NUMBER .)
 
 
-state 12
+state 13
 
     (8) expression -> BOOLEAN .
 
@@ -330,6 +405,11 @@ state 12
     PRINT           reduce using rule 8 (expression -> BOOLEAN .)
     IF              reduce using rule 8 (expression -> BOOLEAN .)
     $end            reduce using rule 8 (expression -> BOOLEAN .)
+    END             reduce using rule 8 (expression -> BOOLEAN .)
+    END_LOOP        reduce using rule 8 (expression -> BOOLEAN .)
+    ELIF            reduce using rule 8 (expression -> BOOLEAN .)
+    ELSE            reduce using rule 8 (expression -> BOOLEAN .)
+    THEN            reduce using rule 8 (expression -> BOOLEAN .)
     PROMPT          reduce using rule 8 (expression -> BOOLEAN .)
     STRING          reduce using rule 8 (expression -> BOOLEAN .)
     NUMBER          reduce using rule 8 (expression -> BOOLEAN .)
@@ -350,7 +430,7 @@ state 12
     LESSER_OR_EQUAL reduce using rule 8 (expression -> BOOLEAN .)
 
 
-state 13
+state 14
 
     (9) expression -> ID .
 
@@ -358,6 +438,11 @@ state 13
     PRINT           reduce using rule 9 (expression -> ID .)
     IF              reduce using rule 9 (expression -> ID .)
     $end            reduce using rule 9 (expression -> ID .)
+    END             reduce using rule 9 (expression -> ID .)
+    END_LOOP        reduce using rule 9 (expression -> ID .)
+    ELIF            reduce using rule 9 (expression -> ID .)
+    ELSE            reduce using rule 9 (expression -> ID .)
+    THEN            reduce using rule 9 (expression -> ID .)
     PROMPT          reduce using rule 9 (expression -> ID .)
     STRING          reduce using rule 9 (expression -> ID .)
     NUMBER          reduce using rule 9 (expression -> ID .)
@@ -378,7 +463,7 @@ state 13
     LESSER_OR_EQUAL reduce using rule 9 (expression -> ID .)
 
 
-state 14
+state 15
 
     (10) expression -> ADD . expression expression
     (5) expression -> . PROMPT expression
@@ -400,28 +485,28 @@ state 14
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 28
+    expression                     shift and go to state 33
 
-state 15
+state 16
 
     (11) expression -> SUBTRACT . expression expression
     (5) expression -> . PROMPT expression
@@ -443,28 +528,28 @@ state 15
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 29
+    expression                     shift and go to state 34
 
-state 16
+state 17
 
     (12) expression -> MULTIPLY . expression expression
     (5) expression -> . PROMPT expression
@@ -486,28 +571,28 @@ state 16
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 30
+    expression                     shift and go to state 35
 
-state 17
+state 18
 
     (13) expression -> DIVIDE . expression expression
     (5) expression -> . PROMPT expression
@@ -529,28 +614,28 @@ state 17
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 31
+    expression                     shift and go to state 36
 
-state 18
+state 19
 
     (14) expression -> AND . expression expression
     (5) expression -> . PROMPT expression
@@ -572,28 +657,28 @@ state 18
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 32
+    expression                     shift and go to state 37
 
-state 19
+state 20
 
     (15) expression -> OR . expression expression
     (5) expression -> . PROMPT expression
@@ -615,28 +700,28 @@ state 19
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 33
+    expression                     shift and go to state 38
 
-state 20
+state 21
 
     (16) expression -> XOR . expression expression
     (5) expression -> . PROMPT expression
@@ -658,28 +743,28 @@ state 20
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 34
+    expression                     shift and go to state 39
 
-state 21
+state 22
 
     (17) expression -> NOT . expression
     (5) expression -> . PROMPT expression
@@ -701,28 +786,28 @@ state 21
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 35
+    expression                     shift and go to state 40
 
-state 22
+state 23
 
     (18) expression -> EQUALS . expression expression
     (5) expression -> . PROMPT expression
@@ -744,28 +829,28 @@ state 22
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 36
+    expression                     shift and go to state 41
 
-state 23
+state 24
 
     (19) expression -> GREATER . expression expression
     (5) expression -> . PROMPT expression
@@ -787,28 +872,28 @@ state 23
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 37
+    expression                     shift and go to state 42
 
-state 24
+state 25
 
     (20) expression -> GREATER_OR_EQUAL . expression expression
     (5) expression -> . PROMPT expression
@@ -830,28 +915,28 @@ state 24
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 38
+    expression                     shift and go to state 43
 
-state 25
+state 26
 
     (21) expression -> LESSER . expression expression
     (5) expression -> . PROMPT expression
@@ -873,28 +958,28 @@ state 25
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 39
+    expression                     shift and go to state 44
 
-state 26
+state 27
 
     (22) expression -> LESSER_OR_EQUAL . expression expression
     (5) expression -> . PROMPT expression
@@ -916,28 +1001,107 @@ state 26
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 40
+    expression                     shift and go to state 45
 
-state 27
+state 28
+
+    (26) statement -> if_statement END_LOOP .
+
+    FILE_END        reduce using rule 26 (statement -> if_statement END_LOOP .)
+    PRINT           reduce using rule 26 (statement -> if_statement END_LOOP .)
+    IF              reduce using rule 26 (statement -> if_statement END_LOOP .)
+    $end            reduce using rule 26 (statement -> if_statement END_LOOP .)
+    END             reduce using rule 26 (statement -> if_statement END_LOOP .)
+    END_LOOP        reduce using rule 26 (statement -> if_statement END_LOOP .)
+    ELIF            reduce using rule 26 (statement -> if_statement END_LOOP .)
+    ELSE            reduce using rule 26 (statement -> if_statement END_LOOP .)
+
+
+state 29
+
+    (24) if_statement -> if_statement ELIF . expression statement_list
+    (5) expression -> . PROMPT expression
+    (6) expression -> . STRING
+    (7) expression -> . NUMBER
+    (8) expression -> . BOOLEAN
+    (9) expression -> . ID
+    (10) expression -> . ADD expression expression
+    (11) expression -> . SUBTRACT expression expression
+    (12) expression -> . MULTIPLY expression expression
+    (13) expression -> . DIVIDE expression expression
+    (14) expression -> . AND expression expression
+    (15) expression -> . OR expression expression
+    (16) expression -> . XOR expression expression
+    (17) expression -> . NOT expression
+    (18) expression -> . EQUALS expression expression
+    (19) expression -> . GREATER expression expression
+    (20) expression -> . GREATER_OR_EQUAL expression expression
+    (21) expression -> . LESSER expression expression
+    (22) expression -> . LESSER_OR_EQUAL expression expression
+
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
+
+    expression                     shift and go to state 46
+
+state 30
+
+    (25) if_statement -> if_statement ELSE . statement_list
+    (27) statement_list -> . THEN statement
+    (28) statement_list -> . statement_list END
+    (29) statement_list -> . statement_list statement
+
+    THEN            shift and go to state 48
+
+    statement_list                 shift and go to state 47
+
+state 31
+
+    (23) if_statement -> IF expression . statement_list
+    (27) statement_list -> . THEN statement
+    (28) statement_list -> . statement_list END
+    (29) statement_list -> . statement_list statement
+
+    THEN            shift and go to state 48
+
+    statement_list                 shift and go to state 49
+
+state 32
 
     (5) expression -> PROMPT expression .
 
@@ -945,6 +1109,11 @@ state 27
     PRINT           reduce using rule 5 (expression -> PROMPT expression .)
     IF              reduce using rule 5 (expression -> PROMPT expression .)
     $end            reduce using rule 5 (expression -> PROMPT expression .)
+    END             reduce using rule 5 (expression -> PROMPT expression .)
+    END_LOOP        reduce using rule 5 (expression -> PROMPT expression .)
+    ELIF            reduce using rule 5 (expression -> PROMPT expression .)
+    ELSE            reduce using rule 5 (expression -> PROMPT expression .)
+    THEN            reduce using rule 5 (expression -> PROMPT expression .)
     PROMPT          reduce using rule 5 (expression -> PROMPT expression .)
     STRING          reduce using rule 5 (expression -> PROMPT expression .)
     NUMBER          reduce using rule 5 (expression -> PROMPT expression .)
@@ -965,7 +1134,7 @@ state 27
     LESSER_OR_EQUAL reduce using rule 5 (expression -> PROMPT expression .)
 
 
-state 28
+state 33
 
     (10) expression -> ADD expression . expression
     (5) expression -> . PROMPT expression
@@ -987,28 +1156,28 @@ state 28
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 41
+    expression                     shift and go to state 50
 
-state 29
+state 34
 
     (11) expression -> SUBTRACT expression . expression
     (5) expression -> . PROMPT expression
@@ -1030,28 +1199,28 @@ state 29
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 42
+    expression                     shift and go to state 51
 
-state 30
+state 35
 
     (12) expression -> MULTIPLY expression . expression
     (5) expression -> . PROMPT expression
@@ -1073,28 +1242,28 @@ state 30
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 43
+    expression                     shift and go to state 52
 
-state 31
+state 36
 
     (13) expression -> DIVIDE expression . expression
     (5) expression -> . PROMPT expression
@@ -1116,28 +1285,28 @@ state 31
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 44
+    expression                     shift and go to state 53
 
-state 32
+state 37
 
     (14) expression -> AND expression . expression
     (5) expression -> . PROMPT expression
@@ -1159,28 +1328,28 @@ state 32
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 45
+    expression                     shift and go to state 54
 
-state 33
+state 38
 
     (15) expression -> OR expression . expression
     (5) expression -> . PROMPT expression
@@ -1202,28 +1371,28 @@ state 33
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 46
+    expression                     shift and go to state 55
 
-state 34
+state 39
 
     (16) expression -> XOR expression . expression
     (5) expression -> . PROMPT expression
@@ -1245,28 +1414,28 @@ state 34
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 47
+    expression                     shift and go to state 56
 
-state 35
+state 40
 
     (17) expression -> NOT expression .
 
@@ -1274,6 +1443,11 @@ state 35
     PRINT           reduce using rule 17 (expression -> NOT expression .)
     IF              reduce using rule 17 (expression -> NOT expression .)
     $end            reduce using rule 17 (expression -> NOT expression .)
+    END             reduce using rule 17 (expression -> NOT expression .)
+    END_LOOP        reduce using rule 17 (expression -> NOT expression .)
+    ELIF            reduce using rule 17 (expression -> NOT expression .)
+    ELSE            reduce using rule 17 (expression -> NOT expression .)
+    THEN            reduce using rule 17 (expression -> NOT expression .)
     PROMPT          reduce using rule 17 (expression -> NOT expression .)
     STRING          reduce using rule 17 (expression -> NOT expression .)
     NUMBER          reduce using rule 17 (expression -> NOT expression .)
@@ -1294,7 +1468,7 @@ state 35
     LESSER_OR_EQUAL reduce using rule 17 (expression -> NOT expression .)
 
 
-state 36
+state 41
 
     (18) expression -> EQUALS expression . expression
     (5) expression -> . PROMPT expression
@@ -1316,28 +1490,28 @@ state 36
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 48
+    expression                     shift and go to state 57
 
-state 37
+state 42
 
     (19) expression -> GREATER expression . expression
     (5) expression -> . PROMPT expression
@@ -1359,28 +1533,28 @@ state 37
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 49
+    expression                     shift and go to state 58
 
-state 38
+state 43
 
     (20) expression -> GREATER_OR_EQUAL expression . expression
     (5) expression -> . PROMPT expression
@@ -1402,28 +1576,28 @@ state 38
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 50
+    expression                     shift and go to state 59
 
-state 39
+state 44
 
     (21) expression -> LESSER expression . expression
     (5) expression -> . PROMPT expression
@@ -1445,28 +1619,28 @@ state 39
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 51
+    expression                     shift and go to state 60
 
-state 40
+state 45
 
     (22) expression -> LESSER_OR_EQUAL expression . expression
     (5) expression -> . PROMPT expression
@@ -1488,28 +1662,96 @@ state 40
     (21) expression -> . LESSER expression expression
     (22) expression -> . LESSER_OR_EQUAL expression expression
 
-    PROMPT          shift and go to state 9
-    STRING          shift and go to state 10
-    NUMBER          shift and go to state 11
-    BOOLEAN         shift and go to state 12
-    ID              shift and go to state 13
-    ADD             shift and go to state 14
-    SUBTRACT        shift and go to state 15
-    MULTIPLY        shift and go to state 16
-    DIVIDE          shift and go to state 17
-    AND             shift and go to state 18
-    OR              shift and go to state 19
-    XOR             shift and go to state 20
-    NOT             shift and go to state 21
-    EQUALS          shift and go to state 22
-    GREATER         shift and go to state 23
-    GREATER_OR_EQUAL shift and go to state 24
-    LESSER          shift and go to state 25
-    LESSER_OR_EQUAL shift and go to state 26
+    PROMPT          shift and go to state 10
+    STRING          shift and go to state 11
+    NUMBER          shift and go to state 12
+    BOOLEAN         shift and go to state 13
+    ID              shift and go to state 14
+    ADD             shift and go to state 15
+    SUBTRACT        shift and go to state 16
+    MULTIPLY        shift and go to state 17
+    DIVIDE          shift and go to state 18
+    AND             shift and go to state 19
+    OR              shift and go to state 20
+    XOR             shift and go to state 21
+    NOT             shift and go to state 22
+    EQUALS          shift and go to state 23
+    GREATER         shift and go to state 24
+    GREATER_OR_EQUAL shift and go to state 25
+    LESSER          shift and go to state 26
+    LESSER_OR_EQUAL shift and go to state 27
 
-    expression                     shift and go to state 52
+    expression                     shift and go to state 61
 
-state 41
+state 46
+
+    (24) if_statement -> if_statement ELIF expression . statement_list
+    (27) statement_list -> . THEN statement
+    (28) statement_list -> . statement_list END
+    (29) statement_list -> . statement_list statement
+
+    THEN            shift and go to state 48
+
+    statement_list                 shift and go to state 62
+
+state 47
+
+    (25) if_statement -> if_statement ELSE statement_list .
+    (28) statement_list -> statement_list . END
+    (29) statement_list -> statement_list . statement
+    (4) statement -> . PRINT expression
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
+
+    END_LOOP        reduce using rule 25 (if_statement -> if_statement ELSE statement_list .)
+    ELIF            reduce using rule 25 (if_statement -> if_statement ELSE statement_list .)
+    ELSE            reduce using rule 25 (if_statement -> if_statement ELSE statement_list .)
+    END             shift and go to state 63
+    PRINT           shift and go to state 5
+    IF              shift and go to state 7
+
+    if_statement                   shift and go to state 6
+    statement                      shift and go to state 64
+
+state 48
+
+    (27) statement_list -> THEN . statement
+    (4) statement -> . PRINT expression
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
+
+    PRINT           shift and go to state 5
+    IF              shift and go to state 7
+
+    statement                      shift and go to state 65
+    if_statement                   shift and go to state 6
+
+state 49
+
+    (23) if_statement -> IF expression statement_list .
+    (28) statement_list -> statement_list . END
+    (29) statement_list -> statement_list . statement
+    (4) statement -> . PRINT expression
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
+
+    END_LOOP        reduce using rule 23 (if_statement -> IF expression statement_list .)
+    ELIF            reduce using rule 23 (if_statement -> IF expression statement_list .)
+    ELSE            reduce using rule 23 (if_statement -> IF expression statement_list .)
+    END             shift and go to state 63
+    PRINT           shift and go to state 5
+    IF              shift and go to state 7
+
+    statement                      shift and go to state 64
+    if_statement                   shift and go to state 6
+
+state 50
 
     (10) expression -> ADD expression expression .
 
@@ -1517,6 +1759,11 @@ state 41
     PRINT           reduce using rule 10 (expression -> ADD expression expression .)
     IF              reduce using rule 10 (expression -> ADD expression expression .)
     $end            reduce using rule 10 (expression -> ADD expression expression .)
+    END             reduce using rule 10 (expression -> ADD expression expression .)
+    END_LOOP        reduce using rule 10 (expression -> ADD expression expression .)
+    ELIF            reduce using rule 10 (expression -> ADD expression expression .)
+    ELSE            reduce using rule 10 (expression -> ADD expression expression .)
+    THEN            reduce using rule 10 (expression -> ADD expression expression .)
     PROMPT          reduce using rule 10 (expression -> ADD expression expression .)
     STRING          reduce using rule 10 (expression -> ADD expression expression .)
     NUMBER          reduce using rule 10 (expression -> ADD expression expression .)
@@ -1537,7 +1784,7 @@ state 41
     LESSER_OR_EQUAL reduce using rule 10 (expression -> ADD expression expression .)
 
 
-state 42
+state 51
 
     (11) expression -> SUBTRACT expression expression .
 
@@ -1545,6 +1792,11 @@ state 42
     PRINT           reduce using rule 11 (expression -> SUBTRACT expression expression .)
     IF              reduce using rule 11 (expression -> SUBTRACT expression expression .)
     $end            reduce using rule 11 (expression -> SUBTRACT expression expression .)
+    END             reduce using rule 11 (expression -> SUBTRACT expression expression .)
+    END_LOOP        reduce using rule 11 (expression -> SUBTRACT expression expression .)
+    ELIF            reduce using rule 11 (expression -> SUBTRACT expression expression .)
+    ELSE            reduce using rule 11 (expression -> SUBTRACT expression expression .)
+    THEN            reduce using rule 11 (expression -> SUBTRACT expression expression .)
     PROMPT          reduce using rule 11 (expression -> SUBTRACT expression expression .)
     STRING          reduce using rule 11 (expression -> SUBTRACT expression expression .)
     NUMBER          reduce using rule 11 (expression -> SUBTRACT expression expression .)
@@ -1565,7 +1817,7 @@ state 42
     LESSER_OR_EQUAL reduce using rule 11 (expression -> SUBTRACT expression expression .)
 
 
-state 43
+state 52
 
     (12) expression -> MULTIPLY expression expression .
 
@@ -1573,6 +1825,11 @@ state 43
     PRINT           reduce using rule 12 (expression -> MULTIPLY expression expression .)
     IF              reduce using rule 12 (expression -> MULTIPLY expression expression .)
     $end            reduce using rule 12 (expression -> MULTIPLY expression expression .)
+    END             reduce using rule 12 (expression -> MULTIPLY expression expression .)
+    END_LOOP        reduce using rule 12 (expression -> MULTIPLY expression expression .)
+    ELIF            reduce using rule 12 (expression -> MULTIPLY expression expression .)
+    ELSE            reduce using rule 12 (expression -> MULTIPLY expression expression .)
+    THEN            reduce using rule 12 (expression -> MULTIPLY expression expression .)
     PROMPT          reduce using rule 12 (expression -> MULTIPLY expression expression .)
     STRING          reduce using rule 12 (expression -> MULTIPLY expression expression .)
     NUMBER          reduce using rule 12 (expression -> MULTIPLY expression expression .)
@@ -1593,7 +1850,7 @@ state 43
     LESSER_OR_EQUAL reduce using rule 12 (expression -> MULTIPLY expression expression .)
 
 
-state 44
+state 53
 
     (13) expression -> DIVIDE expression expression .
 
@@ -1601,6 +1858,11 @@ state 44
     PRINT           reduce using rule 13 (expression -> DIVIDE expression expression .)
     IF              reduce using rule 13 (expression -> DIVIDE expression expression .)
     $end            reduce using rule 13 (expression -> DIVIDE expression expression .)
+    END             reduce using rule 13 (expression -> DIVIDE expression expression .)
+    END_LOOP        reduce using rule 13 (expression -> DIVIDE expression expression .)
+    ELIF            reduce using rule 13 (expression -> DIVIDE expression expression .)
+    ELSE            reduce using rule 13 (expression -> DIVIDE expression expression .)
+    THEN            reduce using rule 13 (expression -> DIVIDE expression expression .)
     PROMPT          reduce using rule 13 (expression -> DIVIDE expression expression .)
     STRING          reduce using rule 13 (expression -> DIVIDE expression expression .)
     NUMBER          reduce using rule 13 (expression -> DIVIDE expression expression .)
@@ -1621,7 +1883,7 @@ state 44
     LESSER_OR_EQUAL reduce using rule 13 (expression -> DIVIDE expression expression .)
 
 
-state 45
+state 54
 
     (14) expression -> AND expression expression .
 
@@ -1629,6 +1891,11 @@ state 45
     PRINT           reduce using rule 14 (expression -> AND expression expression .)
     IF              reduce using rule 14 (expression -> AND expression expression .)
     $end            reduce using rule 14 (expression -> AND expression expression .)
+    END             reduce using rule 14 (expression -> AND expression expression .)
+    END_LOOP        reduce using rule 14 (expression -> AND expression expression .)
+    ELIF            reduce using rule 14 (expression -> AND expression expression .)
+    ELSE            reduce using rule 14 (expression -> AND expression expression .)
+    THEN            reduce using rule 14 (expression -> AND expression expression .)
     PROMPT          reduce using rule 14 (expression -> AND expression expression .)
     STRING          reduce using rule 14 (expression -> AND expression expression .)
     NUMBER          reduce using rule 14 (expression -> AND expression expression .)
@@ -1649,7 +1916,7 @@ state 45
     LESSER_OR_EQUAL reduce using rule 14 (expression -> AND expression expression .)
 
 
-state 46
+state 55
 
     (15) expression -> OR expression expression .
 
@@ -1657,6 +1924,11 @@ state 46
     PRINT           reduce using rule 15 (expression -> OR expression expression .)
     IF              reduce using rule 15 (expression -> OR expression expression .)
     $end            reduce using rule 15 (expression -> OR expression expression .)
+    END             reduce using rule 15 (expression -> OR expression expression .)
+    END_LOOP        reduce using rule 15 (expression -> OR expression expression .)
+    ELIF            reduce using rule 15 (expression -> OR expression expression .)
+    ELSE            reduce using rule 15 (expression -> OR expression expression .)
+    THEN            reduce using rule 15 (expression -> OR expression expression .)
     PROMPT          reduce using rule 15 (expression -> OR expression expression .)
     STRING          reduce using rule 15 (expression -> OR expression expression .)
     NUMBER          reduce using rule 15 (expression -> OR expression expression .)
@@ -1677,7 +1949,7 @@ state 46
     LESSER_OR_EQUAL reduce using rule 15 (expression -> OR expression expression .)
 
 
-state 47
+state 56
 
     (16) expression -> XOR expression expression .
 
@@ -1685,6 +1957,11 @@ state 47
     PRINT           reduce using rule 16 (expression -> XOR expression expression .)
     IF              reduce using rule 16 (expression -> XOR expression expression .)
     $end            reduce using rule 16 (expression -> XOR expression expression .)
+    END             reduce using rule 16 (expression -> XOR expression expression .)
+    END_LOOP        reduce using rule 16 (expression -> XOR expression expression .)
+    ELIF            reduce using rule 16 (expression -> XOR expression expression .)
+    ELSE            reduce using rule 16 (expression -> XOR expression expression .)
+    THEN            reduce using rule 16 (expression -> XOR expression expression .)
     PROMPT          reduce using rule 16 (expression -> XOR expression expression .)
     STRING          reduce using rule 16 (expression -> XOR expression expression .)
     NUMBER          reduce using rule 16 (expression -> XOR expression expression .)
@@ -1705,7 +1982,7 @@ state 47
     LESSER_OR_EQUAL reduce using rule 16 (expression -> XOR expression expression .)
 
 
-state 48
+state 57
 
     (18) expression -> EQUALS expression expression .
 
@@ -1713,6 +1990,11 @@ state 48
     PRINT           reduce using rule 18 (expression -> EQUALS expression expression .)
     IF              reduce using rule 18 (expression -> EQUALS expression expression .)
     $end            reduce using rule 18 (expression -> EQUALS expression expression .)
+    END             reduce using rule 18 (expression -> EQUALS expression expression .)
+    END_LOOP        reduce using rule 18 (expression -> EQUALS expression expression .)
+    ELIF            reduce using rule 18 (expression -> EQUALS expression expression .)
+    ELSE            reduce using rule 18 (expression -> EQUALS expression expression .)
+    THEN            reduce using rule 18 (expression -> EQUALS expression expression .)
     PROMPT          reduce using rule 18 (expression -> EQUALS expression expression .)
     STRING          reduce using rule 18 (expression -> EQUALS expression expression .)
     NUMBER          reduce using rule 18 (expression -> EQUALS expression expression .)
@@ -1733,7 +2015,7 @@ state 48
     LESSER_OR_EQUAL reduce using rule 18 (expression -> EQUALS expression expression .)
 
 
-state 49
+state 58
 
     (19) expression -> GREATER expression expression .
 
@@ -1741,6 +2023,11 @@ state 49
     PRINT           reduce using rule 19 (expression -> GREATER expression expression .)
     IF              reduce using rule 19 (expression -> GREATER expression expression .)
     $end            reduce using rule 19 (expression -> GREATER expression expression .)
+    END             reduce using rule 19 (expression -> GREATER expression expression .)
+    END_LOOP        reduce using rule 19 (expression -> GREATER expression expression .)
+    ELIF            reduce using rule 19 (expression -> GREATER expression expression .)
+    ELSE            reduce using rule 19 (expression -> GREATER expression expression .)
+    THEN            reduce using rule 19 (expression -> GREATER expression expression .)
     PROMPT          reduce using rule 19 (expression -> GREATER expression expression .)
     STRING          reduce using rule 19 (expression -> GREATER expression expression .)
     NUMBER          reduce using rule 19 (expression -> GREATER expression expression .)
@@ -1761,7 +2048,7 @@ state 49
     LESSER_OR_EQUAL reduce using rule 19 (expression -> GREATER expression expression .)
 
 
-state 50
+state 59
 
     (20) expression -> GREATER_OR_EQUAL expression expression .
 
@@ -1769,6 +2056,11 @@ state 50
     PRINT           reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
     IF              reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
     $end            reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
+    END             reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
+    END_LOOP        reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
+    ELIF            reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
+    ELSE            reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
+    THEN            reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
     PROMPT          reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
     STRING          reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
     NUMBER          reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
@@ -1789,7 +2081,7 @@ state 50
     LESSER_OR_EQUAL reduce using rule 20 (expression -> GREATER_OR_EQUAL expression expression .)
 
 
-state 51
+state 60
 
     (21) expression -> LESSER expression expression .
 
@@ -1797,6 +2089,11 @@ state 51
     PRINT           reduce using rule 21 (expression -> LESSER expression expression .)
     IF              reduce using rule 21 (expression -> LESSER expression expression .)
     $end            reduce using rule 21 (expression -> LESSER expression expression .)
+    END             reduce using rule 21 (expression -> LESSER expression expression .)
+    END_LOOP        reduce using rule 21 (expression -> LESSER expression expression .)
+    ELIF            reduce using rule 21 (expression -> LESSER expression expression .)
+    ELSE            reduce using rule 21 (expression -> LESSER expression expression .)
+    THEN            reduce using rule 21 (expression -> LESSER expression expression .)
     PROMPT          reduce using rule 21 (expression -> LESSER expression expression .)
     STRING          reduce using rule 21 (expression -> LESSER expression expression .)
     NUMBER          reduce using rule 21 (expression -> LESSER expression expression .)
@@ -1817,7 +2114,7 @@ state 51
     LESSER_OR_EQUAL reduce using rule 21 (expression -> LESSER expression expression .)
 
 
-state 52
+state 61
 
     (22) expression -> LESSER_OR_EQUAL expression expression .
 
@@ -1825,6 +2122,11 @@ state 52
     PRINT           reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     IF              reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     $end            reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+    END             reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+    END_LOOP        reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+    ELIF            reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+    ELSE            reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+    THEN            reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     PROMPT          reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     STRING          reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     NUMBER          reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
@@ -1843,4 +2145,61 @@ state 52
     GREATER_OR_EQUAL reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     LESSER          reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
     LESSER_OR_EQUAL reduce using rule 22 (expression -> LESSER_OR_EQUAL expression expression .)
+
+
+state 62
+
+    (24) if_statement -> if_statement ELIF expression statement_list .
+    (28) statement_list -> statement_list . END
+    (29) statement_list -> statement_list . statement
+    (4) statement -> . PRINT expression
+    (26) statement -> . if_statement END_LOOP
+    (23) if_statement -> . IF expression statement_list
+    (24) if_statement -> . if_statement ELIF expression statement_list
+    (25) if_statement -> . if_statement ELSE statement_list
+
+    END_LOOP        reduce using rule 24 (if_statement -> if_statement ELIF expression statement_list .)
+    ELIF            reduce using rule 24 (if_statement -> if_statement ELIF expression statement_list .)
+    ELSE            reduce using rule 24 (if_statement -> if_statement ELIF expression statement_list .)
+    END             shift and go to state 63
+    PRINT           shift and go to state 5
+    IF              shift and go to state 7
+
+    if_statement                   shift and go to state 6
+    statement                      shift and go to state 64
+
+state 63
+
+    (28) statement_list -> statement_list END .
+
+    END             reduce using rule 28 (statement_list -> statement_list END .)
+    PRINT           reduce using rule 28 (statement_list -> statement_list END .)
+    IF              reduce using rule 28 (statement_list -> statement_list END .)
+    END_LOOP        reduce using rule 28 (statement_list -> statement_list END .)
+    ELIF            reduce using rule 28 (statement_list -> statement_list END .)
+    ELSE            reduce using rule 28 (statement_list -> statement_list END .)
+
+
+state 64
+
+    (29) statement_list -> statement_list statement .
+
+    END             reduce using rule 29 (statement_list -> statement_list statement .)
+    PRINT           reduce using rule 29 (statement_list -> statement_list statement .)
+    IF              reduce using rule 29 (statement_list -> statement_list statement .)
+    END_LOOP        reduce using rule 29 (statement_list -> statement_list statement .)
+    ELIF            reduce using rule 29 (statement_list -> statement_list statement .)
+    ELSE            reduce using rule 29 (statement_list -> statement_list statement .)
+
+
+state 65
+
+    (27) statement_list -> THEN statement .
+
+    END             reduce using rule 27 (statement_list -> THEN statement .)
+    PRINT           reduce using rule 27 (statement_list -> THEN statement .)
+    IF              reduce using rule 27 (statement_list -> THEN statement .)
+    END_LOOP        reduce using rule 27 (statement_list -> THEN statement .)
+    ELIF            reduce using rule 27 (statement_list -> THEN statement .)
+    ELSE            reduce using rule 27 (statement_list -> THEN statement .)
 

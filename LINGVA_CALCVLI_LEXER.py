@@ -40,8 +40,11 @@ reserved = {
 
     #CONTROL FLOW
     'SI' : 'IF',
+    'SIN' : 'ELIF',
+    'ALITER' : 'ELSE',
     'TVNC' : 'THEN',
     'FINIS' : 'END',
+    'FINIS_CIRCVITVS' : 'END_LOOP',
     'DVM' : 'WHILE',
 
     #LOGIC
