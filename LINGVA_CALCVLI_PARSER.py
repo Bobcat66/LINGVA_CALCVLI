@@ -128,6 +128,9 @@ s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 DICERE 'SALVE MVNDI'
 SI VEL MAIOR SVMMA NO. VIII NO. VI NO. V MAIOR_VP NO. VI NO. IV TVNC
 DICERE 'op one'
+SI VERVM TVNC
+DICERE 'hello'
+FINIS FINIS_CIRCVITVS
 FINIS SIN MINOR NO. V PROPORTIO NO. I NO. IV TVNC
 DICERE 'op two'
 FINIS ALITER TVNC
@@ -140,6 +143,4 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 # (3 * 4) + (3 / 4)
 # should return 12.75
 result = parser.parse(s)
-#print(result)
-for ele in result:
-    print(ele)
+print(result)
