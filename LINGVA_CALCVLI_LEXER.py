@@ -28,7 +28,7 @@ reserved = {
     #ARRAYS
     'ORDO_DECLARO' : 'DECLARE_ARR',
     'ORDO_ASSIGNO' : 'ASSIGN_ARR',
-    'UT_ORDO' : 'CONVERT_TO_ARRAY',
+    'VT_ORDO' : 'CONVERT_TO_ARRAY',
     'EXPROMO' : 'RETRIEVE_ELE',
     'ERADO' : 'DELETE_ELE',
     'ADDO' : 'APPEND',
