@@ -199,8 +199,8 @@ def p_error(p):
 # Build the parser
 parser = yacc.yacc()
 
-
-s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+if __name__ == '__main__':
+    s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 DICERE 'SALVE MVNDI'
 SI VERVM TVNC
 DICERE 'op one'
@@ -218,5 +218,5 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 
 # (3 * 4) + (3 / 4)
 # should return 12.75
-result = parser.parse(s)
-print(result)
+    result = parser.parse(s)
+    print(result)
