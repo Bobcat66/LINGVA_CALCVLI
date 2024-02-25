@@ -93,7 +93,7 @@ def t_NUMBER(t):
     return t
 
 def t_ID(t):
-    r'[ABCDEFGHIKLMNOPQRSTVYZ_]+\b'
+    r'[ABCDEFGHIKLMNOPQRSTVXYZ_]+\b'
     t.type = reserved.get(t.value,'ID')    # Check for reserved words
     return t
 

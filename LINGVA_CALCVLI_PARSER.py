@@ -126,7 +126,7 @@ def p_end_if_statement(p):
 
 def p_while_statement(p):
     'statement : WHILE expression statement_list END_LOOP'
-    p[0] = tuple(['$WHILE'] + p[1])
+    p[0] = ('$WHILE',p[2],p[3])
 
 def p_statement_list(p):
     '''statement_list : THEN statement
@@ -201,22 +201,22 @@ parser = yacc.yacc()
 
 if __name__ == '__main__':
     s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
-DICERE 'SALVE MVNDI'
-SI VERVM TVNC
-DICERE 'op one'
-SI VERVM TVNC
-DICERE 'hello'
-FINIS FINIS_CIRCVITVS
-FINIS SIN VERVM TVNC
-DICERE 'op two'
-FINIS ALITER TVNC
-DICERE 'op three'
+DECLARO COVNTER NVMERVS
+ASSIGNO COVNTER NO. I
+ORDO_DECLARO ARRAY NO. V NVMERVS
+ORDO_IMMVTO ARRAY NO. I NO. I
+ORDO_IMMVTO ARRAY NO. II NO. II
+ORDO_IMMVTO ARRAY NO. III NO. III
+ORDO_IMMVTO ARRAY NO. IV NO. IV
+ORDO_IMMVTO ARRAY NO. V NO. V
+DVM MINOR_VP COVNTER NO. V TVNC
+DICERE IMAGO EXPROMO ARRAY COVNTER SCRIPTVM
+INCREMENTVM COVNTER
 FINIS
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
-
-# (3 * 4) + (3 / 4)
-# should return 12.75
     result = parser.parse(s)
-    print(result)
+    for ele in result:
+        print(ele)
+    #print(result)
