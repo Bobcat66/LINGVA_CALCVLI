@@ -26,13 +26,14 @@ reserved = {
     'MINOR_VP' : 'LESSER_OR_EQUAL',
 
     #ARRAYS
-    'ORDO_DECLARO' : 'DECLARE_ARR',
-    'ORDO_ASSIGNO' : 'ASSIGN_ARR',
-    'VT_ORDO' : 'CONVERT_TO_ARRAY',
-    'EXPROMO' : 'RETRIEVE_ELE',
-    'ERADO' : 'DELETE_ELE',
-    'ADDO' : 'APPEND',
-    'LONGITVDO' : 'LENGTH',
+    'ORDO_DECLARO' : 'DECLARE_ARR', #statement
+    'ORDO_IMMVTO' : 'EDIT_ARR', #statement
+    'ORDO_ASSIGNO' : 'ASSIGN_ARR', #statement
+    'VT_ORDO' : 'CONVERT_TO_ARRAY', #expression
+    'EXPROMO' : 'RETRIEVE_ELE', #expression
+    'ERADO' : 'DELETE_ELE', #statement
+    'ADDO' : 'APPEND', #statement
+    'LONGITVDO' : 'LENGTH', #expression
 
     #I/O
     'DICERE' : 'PRINT',
@@ -52,6 +53,16 @@ reserved = {
     'VEL' : 'OR',
     'AVT' : 'XOR',
     'ET' : 'AND',
+
+    #TYPE
+    'SCRIPTVM' : 'STRING_TYPE',
+    'NVMERVS' : 'NUMBER_TYPE',
+    'PARS_NVMERI' : 'RATIO_TYPE',
+    'PROPOSITIO' : 'BOOLEAN_TYPE',
+
+    #BOOLEAN VALUES
+    'VERVM' : 'TRUE',
+    'FALSVM' : 'FALSE'
 }
 
 tokens = [
@@ -59,7 +70,6 @@ tokens = [
     'FILE_END',
     'STRING',
     'NUMBER',
-    'BOOLEAN',
     "ID"
 ] + list(reserved.values())
 
@@ -80,11 +90,6 @@ def t_STRING(t):
 def t_NUMBER(t):
     r'NO[.][ ](?:[IVXLCDM]+|NVLLA)'
     t.value = NVMERVS_ROMANVS.to_decimal(t.value[4:])
-    return t
-
-def t_BOOLEAN(t):
-    r'\b(?:VERVM|FALSVM)\b'
-    t.value = t.value == 'VERVM'
     return t
 
 def t_ID(t):

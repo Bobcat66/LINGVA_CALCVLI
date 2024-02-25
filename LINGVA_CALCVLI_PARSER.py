@@ -34,8 +34,27 @@ def p_terminal_number_expr(p):
     p[0] = ("@NUMBER",p[1])
 
 def p_terminal_boolean_expr(p):
-    'expression : BOOLEAN'
-    p[0] = ("@BOOLEAN",p[1])
+    '''expression : TRUE
+                  | FALSE'''
+    val = p[1] == 'VERVM'
+    p[0] = ("@BOOLEAN",val)
+
+def p_terminal_type_expr(p):
+    '''expression : STRING_TYPE
+                  | NUMBER_TYPE
+                  | RATIO_TYPE
+                  | BOOLEAN_TYPE'''
+    val = 'NONE'
+    match p[1]:
+        case 'SCRIPTVM':
+            val = 'STRING'
+        case 'NVMERVS':
+            val = 'NUMBER'
+        case 'PARS_NVMERI':
+            val = 'RATIO'
+        case 'PROPOSITIO':
+            val = 'BOOLEAN'
+    p[0] = ("@TYPE",val)
 
 def p_terminal_id_expr(p):
     'expression : ID'
@@ -105,6 +124,10 @@ def p_end_if_statement(p):
     'statement : if_statement END_LOOP'
     p[0] = tuple(["$IF"] + p[1])
 
+def p_while_statement(p):
+    'statement : WHILE expression statement_list END_LOOP'
+    p[0] = tuple(['$WHILE'] + p[1])
+
 def p_statement_list(p):
     '''statement_list : THEN statement
                       | statement_list END'''
@@ -117,12 +140,65 @@ def p_statement_list_expand(p):
     'statement_list : statement_list statement'
     p[0] = p[1] + [p[2]]
 
+def p_variables(p):
+    '''statement : DECLARE_VAR expression expression
+                 | ASSIGN_VAR expression expression
+                 | INCREMENT expression
+                 | DECREMENT expression'''
+    match p[1]:
+        case 'DECLARO':
+            p[0] = ('$DECLARE_VAR',p[2],p[3])
+        case 'ASSIGNO':
+            p[0] = ('$ASSIGN_VAR',p[2],p[3])
+        case 'INCREMENTVM':
+            p[0] = ('$INCREMENT',p[2])
+        case 'DECREMENTVM':
+            p[0] = ('$DECREMENT',p[2])
+
+def p_variable_expr(p):
+    '''expression : CAST_VAR expression expression'''
+    match p[1]:
+        case 'IMAGO':
+            p[0] = ('CAST_VAR',p[2],p[3])
+        
+def p_array_statements(p):
+    '''statement : DECLARE_ARR expression expression expression
+                 | EDIT_ARR expression expression expression
+                 | ASSIGN_ARR expression expression
+                 | DELETE_ELE expression expression
+                 | APPEND expression expression'''
+    
+    match p[1]:
+        case 'ORDO_DECLARO':
+            p[0] = ('$DECLARE_ARR',p[2],p[3],p[4])
+        case 'ORDO_IMMVTO':
+            p[0] = ('$EDIT_ARR',p[2],p[3],p[4])
+        case 'ORDO_ASSIGNO':
+            p[0] = ('$ASSIGN_ARR',p[2],p[3])
+        case 'ERADO':
+            p[0] = ('$DELETE_ELE',p[2],p[3])
+        case 'ADDO':
+            p[0] = ('$APPEND',p[2],p[3])
+
+def p_array_expr(p):
+    '''expression : RETRIEVE_ELE expression expression
+                  | CONVERT_TO_ARRAY expression
+                  | LENGTH expression'''
+    match p[1]:
+        case 'EXPROMO':
+            p[0] = ('RETRIEVE_ELE',p[2],p[3])
+        case 'VT_ORDO':
+            p[0] = ('CONVERT_TO_ARRAY',p[2])
+        case 'LONGITVDO':
+            p[0] = ('LENGTH',p[2])
+
 # Error rule for syntax errors
 def p_error(p):
     print("Syntax error in input!")
 
 # Build the parser
 parser = yacc.yacc()
+
 
 s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 DICERE 'SALVE MVNDI'
