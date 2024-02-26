@@ -123,6 +123,33 @@ class executer():
             
     
     def executeStatement(self,rawStatement):
+        
+        #if and while
+        if rawStatement[0] == "$IF":
+            for ifBlock in rawStatement[1:]:
+                #Iterates through all ifblocks
+                if ifBlock[0] == "IF" or ifBlock[0] == "ELIF":
+                    #checks to make sure if Ifblock is if, elif, or else
+                    if self.simplifyExpr(ifBlock[1]):
+                        for ifBlockStatement in ifBlock[2]:
+                            self.executeStatement(ifBlockStatement)
+                        break
+                    else:
+                        continue
+                else:
+                    #If the ifblock is an else
+                    for ifBlockStatement in ifBlock[1]:
+                        self.executeStatement(ifBlockStatement)
+                    break
+            return
+        
+        if rawStatement[0] == "$WHILE":
+            while self.simplifyExpr(rawStatement[1]):
+                for whileBlockStatement in rawStatement[2]:
+                    self.executeStatement(whileBlockStatement)
+            return
+        
+
         statement = [rawStatement[0]]
         for ele in rawStatement[1:]:
             statement.append(self.simplifyExpr(ele))
