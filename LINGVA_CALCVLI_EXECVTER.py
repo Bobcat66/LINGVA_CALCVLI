@@ -66,12 +66,16 @@ class executer():
             self.printTree(statement)
     
     def simplifyExpr(self,expr):
+
         if expr[0] == "@ID":
             return self.memory[expr[1]]
+            
         if expr[0] == "@PROMPT":
             return input(expr[1])
+        
         if expr[0][0] == "@":
             return expr[1]
+        
         match expr[0]:
 
             #Arithmetic
@@ -107,86 +111,95 @@ class executer():
                 return self.simplifyExpr(expr[1]) <= self.simplifyExpr(expr[2])
             
             case "CAST_VAR":
-                print("NOT IMPLEMENTED")
-                return
+                match self.simplifyExpr(expr[2]):
+                    case "STRING":
+                        return str(self.simplifyExpr(expr[1]))
+                    case "NUMBER":
+                        return int(self.simplifyExpr(expr[1]))
+                    case "BOOLEAN":
+                        return bool(self.simplifyExpr(expr[1]))
+                    case "RATIO":
+                        return float(self.simplifyExpr(expr[1]))
+                    
             case "RETRIEVE_ELE":
-                print("NOT IMPLEMENTED")
-                return
+                return self.memory[expr[1][1]][self.simplifyExpr(expr[2])-1]
             case "CONVERT_TO_ARRAY":
-                print("NOT IMPLEMENTED")
-                return
+                return self.memory[expr[1][1]].split()
             case "LENGTH":
-                print("NOT IMPLEMENTED")
-                return
+                return len(self.memory[expr[1][1]])
             
 
             
     
-    def executeStatement(self,rawStatement):
+    def executeStatement(self,statement,verbose=False):
+
+        #Verbose is for debugging
         
         #if and while
-        if rawStatement[0] == "$IF":
-            for ifBlock in rawStatement[1:]:
+        if statement[0] == "$IF":
+            for ifBlock in statement[1:]:
                 #Iterates through all ifblocks
                 if ifBlock[0] == "IF" or ifBlock[0] == "ELIF":
                     #checks to make sure if Ifblock is if, elif, or else
                     if self.simplifyExpr(ifBlock[1]):
                         for ifBlockStatement in ifBlock[2]:
-                            self.executeStatement(ifBlockStatement)
+                            self.executeStatement(ifBlockStatement,verbose=verbose)
                         break
                     else:
                         continue
                 else:
                     #If the ifblock is an else
                     for ifBlockStatement in ifBlock[1]:
-                        self.executeStatement(ifBlockStatement)
+                        self.executeStatement(ifBlockStatement,verbose=verbose)
                     break
             return
         
-        if rawStatement[0] == "$WHILE":
-            while self.simplifyExpr(rawStatement[1]):
-                for whileBlockStatement in rawStatement[2]:
-                    self.executeStatement(whileBlockStatement)
+        if statement[0] == "$WHILE":
+            while self.simplifyExpr(statement[1]):
+                for whileBlockStatement in statement[2]:
+                    self.executeStatement(whileBlockStatement,verbose=verbose)
             return
         
-
-        statement = [rawStatement[0]]
-        for ele in rawStatement[1:]:
-            statement.append(self.simplifyExpr(ele))
+        if verbose:
+            print("executing ", statement)
 
         match statement[0]:
             case "$PRINT":
                 print(self.simplifyExpr(statement[1]))
 
             #VARIABLES & ARRAYS, WIP does not differentiate between types
+            #When referring to variable name and not variable value, directly pull the variable name from the statement with something like statement[1][1] instead of simplifyExpr
             case "$DECLARE_VAR":
-                self.memory[statement[1]] = None
+                self.memory[statement[1][1]] = None
             case "$ASSIGN_VAR":
-                self.memory[statement[1]] = statement[2]
+                self.memory[statement[1][1]] = self.simplifyExpr(statement[2])
             case "$INCREMENT":
-                self.memory[statement[1]] = self.memory[statement[1]] + 1
+                self.memory[statement[1][1]] = self.memory[statement[1][1]] + 1
             case "$DECREMENT":
-                self.memory[statement[1]] = self.memory[statement[1]] - 1
+                self.memory[statement[1][1]] = self.memory[statement[1][1]] - 1
 
             case "$DECLARE_ARR":
-                self.memory[statement[1]] = None
+                newList = []
+                for i in range(self.simplifyExpr(statement[2])):
+                    newList.append(None)
+                self.memory[statement[1][1]] = newList
             case "$EDIT_ARR":
-                temp = self.memory[statement[1]]
-                temp[statement[2]] = statement[3]
-                self.memory[statement[1]] = temp
+                temp = self.memory[statement[1][1]]
+                temp[self.simplifyExpr(statement[2])-1] = self.simplifyExpr(statement[3])
+                self.memory[statement[1][1]] = temp
             case "$ASSIGN_ARR":
-                self.memory[statement[1]] = statement[2]
+                self.memory[statement[1][1]] = self.simplifyExpr(statement[2])
             case "$DELETE_ELE":
-                temp = self.memory[statement[1]]
-                temp.pop(statement[2])
-                self.memory[statement[1]] = temp
+                temp = self.memory[statement[1][1]]
+                temp.pop(self.simplifyExpr(statement[2])-1)
+                self.memory[statement[1][1]] = temp
             case "$APPEND":
-                self.memory[statement[1]] = self.memory[statement[1]].append(statement[2])
+                self.memory[statement[1][1]] = self.memory[statement[1]].append(self.simplifyExpr(statement[2]))
     
-    def execute(self,code):
+    def execute(self,code,verbose=False):
         parsedCode = self.parser.parse(code)
         for statement in parsedCode:
-            self.executeStatement(statement)
+            self.executeStatement(statement,verbose=verbose)
             
 
 executer = executer()
@@ -220,7 +233,7 @@ FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
 c = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
-SI VERVM TVNC
+SI FALSVM TVNC
     SI VERVM TVNC
         DICERE 'SALVE MVNDI'
     FINIS ALITER TVNC
@@ -252,5 +265,12 @@ FINIS ALITER TVNC
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
+d = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+DICERE 'SALVE MVNDI'
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
+"""
 
-executer.printCode(c)
+
+#executer.printCode(c)
+
+executer.execute(c,verbose=True)

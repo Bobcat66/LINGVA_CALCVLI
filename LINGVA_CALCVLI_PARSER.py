@@ -167,7 +167,6 @@ def p_array_statements(p):
                  | ASSIGN_ARR expression expression
                  | DELETE_ELE expression expression
                  | APPEND expression expression'''
-    
     match p[1]:
         case 'ORDO_DECLARO':
             p[0] = ('$DECLARE_ARR',p[2],p[3],p[4])
@@ -201,12 +200,35 @@ parser = yacc.yacc()
 
 if __name__ == '__main__':
     s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
-SI VERVM TVNC
-SI VERVM TVNC
-DICERE 'SALVE MVNDI'
-FINIS
-FINIS_CIRCVITVS
-FINIS
+SI FALSVM TVNC
+    SI VERVM TVNC
+        DICERE 'SALVE MVNDI'
+    FINIS ALITER TVNC
+        DICERE 'SALVE MVNDI'
+        SI VEL MAIOR SVMMA NO. VIII NO. VI NO. V MAIOR_VP NO. VI NO. IV TVNC
+            DICERE 'op one'
+        FINIS SIN MINOR NO. V PROPORTIO NO. I NO. IV TVNC
+            DICERE 'op two'
+        FINIS ALITER TVNC
+            DICERE 'op three'
+        FINIS
+        FINIS_CIRCVITVS
+    FINIS
+    FINIS_CIRCVITVS    
+FINIS ALITER TVNC
+    DECLARO COVNTER NVMERVS
+    ASSIGNO COVNTER NO. I
+    ORDO_DECLARO ARRAY NO. V NVMERVS
+    ORDO_IMMVTO ARRAY NO. I NO. I
+    ORDO_IMMVTO ARRAY NO. II NO. II
+    ORDO_IMMVTO ARRAY NO. III NO. III
+    ORDO_IMMVTO ARRAY NO. IV NO. IV
+    ORDO_IMMVTO ARRAY NO. V NO. V
+    DVM MINOR_VP COVNTER NO. V TVNC
+        DICERE IMAGO EXPROMO ARRAY COVNTER SCRIPTVM
+        INCREMENTVM COVNTER
+    FINIS
+    FINIS_CIRCVITVS
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
