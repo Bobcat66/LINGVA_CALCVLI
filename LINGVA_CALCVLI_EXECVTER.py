@@ -1,8 +1,9 @@
 from LINGVA_CALCVLI_PARSER import parser
 
-class compiler():
+class executer():
     def __init__(self) -> None:
         self.parser = parser
+        self.memory = {}
             
     def printTree(self,statement,front=""):
         #breaks down trees and makes them more readable
@@ -59,12 +60,109 @@ class compiler():
         else:
             print(statement, end=" ")
 
-    def compile(self,code):
+    def printCode(self,code):
         parsedCode = self.parser.parse(code)
         for statement in parsedCode:
             self.printTree(statement)
+    
+    def simplifyExpr(self,expr):
+        if expr[0] == "@ID":
+            return self.memory[expr[1]]
+        if expr[0] == "@PROMPT":
+            return input(expr[1])
+        if expr[0][0] == "@":
+            return expr[1]
+        match expr[0]:
 
-compiler = compiler()
+            #Arithmetic
+            case "ADD":
+                return self.simplifyExpr(expr[1]) + self.simplifyExpr(expr[2])
+            case "SUBTRACT":
+                return self.simplifyExpr(expr[1]) - self.simplifyExpr(expr[2])
+            case "MULTIPLY":
+                return self.simplifyExpr(expr[1]) * self.simplifyExpr(expr[2])
+            case "DIVIDE":
+                return self.simplifyExpr(expr[1]) / self.simplifyExpr(expr[2])
+            
+            #Logic
+            case "AND":
+                return self.simplifyExpr(expr[1]) and self.simplifyExpr(expr[2])
+            case "OR":
+                return self.simplifyExpr(expr[1]) or self.simplifyExpr(expr[2])
+            case "XOR":
+                return (self.simplifyExpr(expr[1]) and not self.simplifyExpr(expr[2])) or (not self.simplifyExpr(expr[1]) and self.simplifyExpr(expr[2]))
+            case "NOT":
+                return not self.simplifyExpr(expr[1])
+            
+            #Comparators
+            case "EQUALS":
+                return self.simplifyExpr(expr[1]) == self.simplifyExpr(expr[2])
+            case "GREATER":
+                return self.simplifyExpr(expr[1]) > self.simplifyExpr(expr[2])
+            case "GREATER_OR_EQUAL":
+                return self.simplifyExpr(expr[1]) >= self.simplifyExpr(expr[2])
+            case "LESSER":
+                return self.simplifyExpr(expr[1]) < self.simplifyExpr(expr[2])
+            case "LESSER_OR_EQUAL":
+                return self.simplifyExpr(expr[1]) <= self.simplifyExpr(expr[2])
+            
+            case "CAST_VAR":
+                print("NOT IMPLEMENTED")
+                return
+            case "RETRIEVE_ELE":
+                print("NOT IMPLEMENTED")
+                return
+            case "CONVERT_TO_ARRAY":
+                print("NOT IMPLEMENTED")
+                return
+            case "LENGTH":
+                print("NOT IMPLEMENTED")
+                return
+            
+
+            
+    
+    def executeStatement(self,rawStatement):
+        statement = [rawStatement[0]]
+        for ele in rawStatement[1:]:
+            statement.append(self.simplifyExpr(ele))
+
+        match statement[0]:
+            case "$PRINT":
+                print(self.simplifyExpr(statement[1]))
+
+            #VARIABLES & ARRAYS, WIP does not differentiate between types
+            case "$DECLARE_VAR":
+                self.memory[statement[1]] = None
+            case "$ASSIGN_VAR":
+                self.memory[statement[1]] = statement[2]
+            case "$INCREMENT":
+                self.memory[statement[1]] = self.memory[statement[1]] + 1
+            case "$DECREMENT":
+                self.memory[statement[1]] = self.memory[statement[1]] - 1
+
+            case "$DECLARE_ARR":
+                self.memory[statement[1]] = None
+            case "$EDIT_ARR":
+                temp = self.memory[statement[1]]
+                temp[statement[2]] = statement[3]
+                self.memory[statement[1]] = temp
+            case "$ASSIGN_ARR":
+                self.memory[statement[1]] = statement[2]
+            case "$DELETE_ELE":
+                temp = self.memory[statement[1]]
+                temp.pop(statement[2])
+                self.memory[statement[1]] = temp
+            case "$APPEND":
+                self.memory[statement[1]] = self.memory[statement[1]].append(statement[2])
+    
+    def execute(self,code):
+        parsedCode = self.parser.parse(code)
+        for statement in parsedCode:
+            self.executeStatement(statement)
+            
+
+executer = executer()
 
 a = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 DECLARO COVNTER NVMERVS
@@ -128,4 +226,4 @@ FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
 
-compiler.compile(c)
+executer.printCode(c)
