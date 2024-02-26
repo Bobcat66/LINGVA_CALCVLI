@@ -14,12 +14,19 @@ class compiler():
                 self.printTree(ele)
             print('}')
         elif statement[0] == '$IF':
-            for ele in statement:
-                print(ele[0])
-                print('{')
-                for ele2 in ele[1]:
-                    self.printTree(ele2)
-                print('}')
+            for ele in statement[1:]:
+                if ele[0] == "ELIF" or ele[0] == "IF":
+                    print(ele[0],ele[1])
+                    print('{')
+                    for ele2 in ele[2]:
+                        self.printTree(ele2)
+                    print('}')
+                else:
+                    print(ele[0])
+                    print('{')
+                    for ele2 in ele[1]:
+                        self.printTree(ele2)
+                    print('}')
         elif statement[0][0] == '$':
             print(statement[0][1:], end=" ")
             for ele in statement[1:]:
@@ -35,7 +42,7 @@ class compiler():
 
 compiler = compiler()
 
-compiler.compile("""IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+a = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
 DECLARO COVNTER NVMERVS
 ASSIGNO COVNTER NO. I
 ORDO_DECLARO ARRAY NO. V NVMERVS
@@ -49,7 +56,19 @@ DICERE IMAGO EXPROMO ARRAY COVNTER SCRIPTVM
 INCREMENTVM COVNTER
 FINIS
 FINIS_CIRCVITVS
-CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
-""")
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
-compiler.compile("""""")
+b = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+DICERE 'SALVE MVNDI'
+SI VEL MAIOR SVMMA NO. VIII NO. VI NO. V MAIOR_VP NO. VI NO. IV TVNC
+DICERE 'op one'
+FINIS SIN MINOR NO. V PROPORTIO NO. I NO. IV TVNC
+DICERE 'op two'
+FINIS ALITER TVNC
+DICERE 'op three'
+FINIS
+FINIS_CIRCVITVS
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
+
+
+compiler.compile(b)
