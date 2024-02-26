@@ -71,7 +71,7 @@ class executer():
             return self.memory[expr[1]]
             
         if expr[0] == "@PROMPT":
-            return input(expr[1])
+            return input(self.simplifyExpr(expr[1]))
         
         if expr[0][0] == "@":
             return expr[1]
