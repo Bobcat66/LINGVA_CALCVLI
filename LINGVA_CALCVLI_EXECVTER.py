@@ -274,4 +274,4 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 
 
     executer.printCode(c)
-    executer.execute(c,verbose=False)
+    #executer.execute(c,verbose=False)
