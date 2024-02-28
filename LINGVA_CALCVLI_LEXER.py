@@ -59,6 +59,7 @@ reserved = {
     'NVMERVS' : 'NUMBER_TYPE',
     'PARS_NVMERI' : 'RATIO_TYPE',
     'PROPOSITIO' : 'BOOLEAN_TYPE',
+    'CHARACTER' : 'CHARACTER_TYPE',
 
     #BOOLEAN VALUES
     'VERVM' : 'TRUE',
@@ -70,7 +71,8 @@ tokens = [
     'FILE_END',
     'STRING',
     'NUMBER',
-    "ID"
+    'CHARACTER',
+    'ID'
 ] + list(reserved.values())
 
 def t_FILE_BEGINNING(t):
@@ -91,6 +93,10 @@ def t_NUMBER(t):
     r'NO[.][ ](?:[IVXLCDM]+|NVLLA)'
     t.value = NVMERVS_ROMANVS.to_decimal(t.value[4:])
     return t
+
+def t_CHARACTER(t):
+    r'CHAR .'
+    t.value = t.value[5]
 
 def t_ID(t):
     r'[ABCDEFGHIKLMNOPQRSTVXYZ_]+\b'

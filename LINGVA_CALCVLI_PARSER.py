@@ -33,6 +33,10 @@ def p_terminal_number_expr(p):
     'expression : NUMBER'
     p[0] = ("@NUMBER",p[1])
 
+def p_terminal_char_expr(p):
+    'expression : CHARACTER'
+    p[0] = ('@CHARACTER',p[1])
+
 def p_terminal_boolean_expr(p):
     '''expression : TRUE
                   | FALSE'''
