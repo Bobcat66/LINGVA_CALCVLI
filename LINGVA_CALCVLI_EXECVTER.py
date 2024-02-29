@@ -1,5 +1,6 @@
 from LINGVA_CALCVLI_PARSER import parser
-
+import NVMERVS_ROMANVS as num
+  
 class executer():
     def __init__(self) -> None:
         self.parser = parser
@@ -167,8 +168,10 @@ class executer():
             case "$PRINT":
                 print(self.simplifyExpr(statement[1]))
 
-            #VARIABLES & ARRAYS, WIP does not differentiate between types
-            #When referring to variable name and not variable value, directly pull the variable name from the statement with something like statement[1][1] instead of simplifyExpr
+            # VARIABLES & ARRAYS, WIP does not differentiate between types
+            # When referring to variable name and not variable value, 
+            # directly pull the variable name from the statement with something like statement[1][1] instead of simplifyExpr
+                
             case "$DECLARE_VAR":
                 self.memory[statement[1][1]] = None
             case "$ASSIGN_VAR":
