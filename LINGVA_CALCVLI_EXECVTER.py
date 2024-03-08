@@ -1,10 +1,24 @@
 from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
-  
+
 class executer():
     def __init__(self) -> None:
         self.parser = parser
         self.memory = {}
+
+    def verifyType(self,type,value):
+        #Matches type (NUMBER,RATIO,CHAR,BOOLEAN,or STRING) to value
+        match type:
+            case "NUMBER":
+                return type(value) is int
+            case "RATIO":
+                return type(value) is int
+            case "CHAR":
+                return type(value) is str and len(value) == 1
+            case "BOOLEAN":
+                return type(value) is bool
+            case "STRING":
+                return type(value) is str
             
     def printTree(self,statement,front=""):
         #breaks down trees and makes them more readable
@@ -175,10 +189,16 @@ class executer():
             case "$DECLARE_VAR":
                 self.memory[statement[1][1]] = None
             case "$ASSIGN_VAR":
+                if not self.verifyType(statement[1][2],statement[1][1]):
+                    return 1
                 self.memory[statement[1][1]] = self.simplifyExpr(statement[2])
             case "$INCREMENT":
+                if not self.verifyType("NUMBER",statement[1][1]):
+                    return 1
                 self.memory[statement[1][1]] = self.memory[statement[1][1]] + 1
             case "$DECREMENT":
+                if not self.verifyType("NUMBER",statement[1][1]):
+                    return 1
                 self.memory[statement[1][1]] = self.memory[statement[1][1]] - 1
 
             case "$DECLARE_ARR":
@@ -187,6 +207,8 @@ class executer():
                     newList.append(None)
                 self.memory[statement[1][1]] = newList
             case "$EDIT_ARR":
+                if not self.verifyType("NUMBER",statement[1][1]):
+                    return 1
                 temp = self.memory[statement[1][1]]
                 temp[self.simplifyExpr(statement[2])-1] = self.simplifyExpr(statement[3])
                 self.memory[statement[1][1]] = temp
@@ -202,9 +224,27 @@ class executer():
     def execute(self,code,verbose=False):
         parsedCode = self.parser.parse(code)
         for statement in parsedCode:
-            self.executeStatement(statement,verbose=verbose)
-            
+            match self.executeStatement(statement,verbose=verbose):
+                case 0:
+                    pass
+                case 1:
+                    print("RETURN CODE 1: TYPE ERROR ON STATEMENT " + statement)
+                    break
+                case 2:
+                    print("RETURN CODE 2: SYNTAX ERROR ON STATEMENT " + statement)
+                    break
+                case _:
+                    print("UNKNOWN ERROR ON STATEMENT " + statement)
+                    break
+        print("RETURN CODE 0: SUCCESSFUL EXECUTION")
+"""
+EXECUTER RETURN CODES
+0: successful execution
+1: type error
+2: syntax error
+"""
 
+            
 executer = executer()
 
 

@@ -1,3 +1,5 @@
+import NVMERVS_ROMANVS as num
+
 class VARIABLE():
     varType = 'NONE'
 
