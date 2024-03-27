@@ -8,7 +8,7 @@ from LINGVA_CALCVLI_LEXER import tokens
 def p_main(p):
     '''main : FILE_BEGINNING statement
             | main FILE_END'''
-    if p[1] == "IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI":
+    if p[1] == "IMPERO TIBI":
         p[0] = [p[2]]
     else:
         p[0] = p[1]
@@ -166,7 +166,11 @@ def p_argument_list(p):
             p[0] = None
         case _:
             p[0] = p[1]
-    
+
+def p_argument_list_expand(p):
+    '''argument_list : argument_list argument'''
+    p[0] = p[1] + [p[2]]
+
 def p_function_statement(p):
     '''statement : DECLARE_FUNCTION func_header statement_list END_FUNCTION'''
     p[0] = ('$DECLARE_FUNCTION',p[2],p[3])
@@ -176,9 +180,31 @@ def p_return_statement(p):
     '''statement : RETURN expression'''
     p[0] = ('$RETURN',p[2])
 
-def p_call_function_statement(p):
-    '''statement : CALL_FUNCTION ID '''
+def p_call_function_expr(p):
+    '''expression : CALL_FUNCTION ID expression_list END_ARGUMENTS
+                  | CALL_FUNCTION ID NO_ARGUMENTS'''
+    p[0] = ('CALL_FUNCTION',p[2],p[3])
 
+def p_call_function_stmt(p):
+    '''statement : CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
+                 | CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS'''
+    
+    p[0] = ('$CALL_FUNCTION',p[2],p[3])
+
+def p_expression_list(p):
+    'expression_list : BEGIN_ARGUMENTS expression'
+    match p[1]:
+        case 'INITIVM_ARGVMENTORVM':
+            p[0] = [p[2]]
+        case 'NVLLVM_ARGVMENTVM':
+            p[0] = None
+        case _:
+            p[0] = p[1]
+
+def p_expression_list_expand(p):
+    'expression_list : expression_list expression'
+    p[0] = p[1] + [p[2]]
+    
 def p_variables(p):
     '''statement : DECLARE_VAR expression expression
                  | ASSIGN_VAR expression expression
@@ -238,7 +264,7 @@ def p_error(p):
 parser = yacc.yacc()
 
 if __name__ == '__main__':
-    s = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+    s = """IMPERO TIBI
 SI FALSVM TVNC
     SI VERVM TVNC
         DICERE 'SALVE MVNDI'
@@ -271,8 +297,8 @@ FINIS ALITER TVNC
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
-    a = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
-DECLARARE_FVNCTIO INITIVM_TITVLI SCRIPTVM OBA NVLLVM_ARGVMENTVM FINIS_TITVLI
+    a = """IMPERO TIBI
+DECLARARE_FVNCTIO INITIVM_TITVLI SCRIPTVM FVNCTION_VNVS NVLLVM_ARGVMENTVM FINIS_TITVLI
 DICERE 'HELLO WORLD'
 DICERE 'HELLO WORLD'
 DICERE 'HELLO WORLD'
@@ -280,6 +306,7 @@ DICERE 'HELLO WORLD'
 REDIRE 'HELLO WORLD'
 FINIS
 FINIS_FVNCTIO
+VOCATERE_SICVT_IMPERIVM FVNCTION_VNVS NVLLVM_ARGVMENTVM
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
     result = parser.parse(a)
     print(result)

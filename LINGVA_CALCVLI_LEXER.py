@@ -58,6 +58,7 @@ reserved = {
     'NVLLVM_ARGVMENTVM' : 'NO_ARGUMENTS',
     'REDIRE' : 'RETURN',
     'VOCATERE' : 'CALL_FUNCTION',
+    'VOCATERE_SICVT_IMPERIVM' : 'CALL_FUNCTION_STATEMENT',
 
     #LOGIC
     'NON' : 'NOT',
@@ -87,7 +88,7 @@ tokens = [
 ] + list(reserved.values())
 
 def t_FILE_BEGINNING(t):
-    r"IMPERIVM[ ]MEVM[ ]INVOCO[ ]ET[ ]PRAECIPIO[ ]TIBI"
+    r"IMPERO[ ]TIBI"
     return t
 
 def t_FILE_END(t):
@@ -130,7 +131,7 @@ lexer = lex.lex()
 if __name__ == "__main__":
 
     data = '''
-IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+IMPERO TIBI
 DECLARO INTCOVNTER PARS_NVMERI
 ASSIGNO INTCOVNTER NO. V
 DVM MAIOR INTCOVNTER NO. NVLLA TVNC
