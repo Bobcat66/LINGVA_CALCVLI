@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import ply.lex as lex
 import NVMERVS_ROMANVS 
 
+#TODO: properly Conjugate reserved words
 reserved = {
 
     #ARITHMETIC OPERATORS
@@ -47,6 +48,16 @@ reserved = {
     'FINIS' : 'END',
     'FINIS_CIRCVITVS' : 'END_LOOP',
     'DVM' : 'WHILE',
+    'DECLARARE_FVNCTIO' : 'DECLARE_FUNCTION',
+    'FINIS_FVNCTIO' : 'END_FUNCTION',
+    'ARGVMENTVM' : 'ARGUMENT_KEYWORD',
+    'INITIVM_ARGVMENTORVM' : 'BEGIN_ARGUMENTS',
+    'FINIS_ARGVMENTORVM' : 'END_ARGUMENTS',
+    'INITIVM_TITVLI' : 'BEGIN_HEADER',
+    'FINIS_TITVLI' : 'END_HEADER',
+    'NVLLVM_ARGVMENTVM' : 'NO_ARGUMENTS',
+    'REDIRE' : 'RETURN',
+    'VOCATERE' : 'CALL_FUNCTION',
 
     #LOGIC
     'NON' : 'NOT',

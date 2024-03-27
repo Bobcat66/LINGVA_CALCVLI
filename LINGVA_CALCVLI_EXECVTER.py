@@ -1,24 +1,58 @@
 from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
 
+class VARIABLE():
+    def __init__(self,type,value=None):
+        self.type = type
+        self.value = value
+
+class ARRAY():
+    def __init__(self,size,type,elements=[]):
+        self.size = size
+        self.type = type
+        self.value = elements
+    
+    def APPEND_ARR(self,value):
+        self.value.append(value)
+        self.size += 1
+    def EDIT_ARR(self,index,value):
+        self.value[index-1] = value
+    
+    def ASSIGN_ARR(self,new_arr):
+        self.value = new_arr
+
+    def DELETE_ELE(self,index):
+        self.value.pop(index)
+        self.size -= 1
+
+    def __str__(self):
+        return str(self.value)
+
+class FUNCTION():
+    def __init__(self,return_type,args,statements):
+        self.return_type = return_type
+        self.args = args
+        self.statements = statements
+
 class executer():
     def __init__(self) -> None:
         self.parser = parser
         self.memory = {}
+        self.funcs = {}
 
     def verifyType(self,type,value):
         #Matches type (NUMBER,RATIO,CHAR,BOOLEAN,or STRING) to value
         match type:
             case "NUMBER":
-                return type(value) is int
+                return isinstance(value,int)
             case "RATIO":
-                return type(value) is int
+                return isinstance(value,float)
             case "CHAR":
-                return type(value) is str and len(value) == 1
+                return isinstance(value,str) and len(value) == 1
             case "BOOLEAN":
-                return type(value) is bool
+                return isinstance(value,bool)
             case "STRING":
-                return type(value) is str
+                return isinstance(value,str)
             
     def printTree(self,statement,front=""):
         #breaks down trees and makes them more readable
@@ -83,7 +117,8 @@ class executer():
     def simplifyExpr(self,expr):
 
         if expr[0] == "@ID":
-            return self.memory[expr[1]]
+            # TODO: ADD FUNCTIONS 
+            return self.memory[expr[1]].value
             
         if expr[0] == "@PROMPT":
             return input(self.simplifyExpr(expr[1]))
@@ -137,15 +172,12 @@ class executer():
                         return float(self.simplifyExpr(expr[1]))
                     
             case "RETRIEVE_ELE":
-                return self.memory[expr[1][1]][self.simplifyExpr(expr[2])-1]
+                return self.memory[expr[1][1]].value[self.simplifyExpr(expr[2])-1]
             case "CONVERT_TO_ARRAY":
-                return self.memory[expr[1][1]].split()
+                return self.memory[expr[1][1]].value.split()
             case "LENGTH":
-                return len(self.memory[expr[1][1]])
-            
-
-            
-    
+                return len(self.memory[expr[1][1]].value)
+             
     def executeStatement(self,statement,verbose=False):
 
         #Verbose is for debugging
@@ -158,23 +190,41 @@ class executer():
                     #checks to make sure if Ifblock is if, elif, or else
                     if self.simplifyExpr(ifBlock[1]):
                         for ifBlockStatement in ifBlock[2]:
-                            self.executeStatement(ifBlockStatement,verbose=verbose)
+                            ret = self.executeStatement(ifBlockStatement,verbose=verbose)
+                            match ret[0]:
+                                case 0:
+                                    pass
+                                case _:
+                                    return ret
                         break
                     else:
                         continue
                 else:
                     #If the ifblock is an else
                     for ifBlockStatement in ifBlock[1]:
-                        self.executeStatement(ifBlockStatement,verbose=verbose)
+                        ret = self.executeStatement(ifBlockStatement,verbose=verbose)
+                        match ret[0]:
+                            case 0:
+                                pass
+                            case _:
+                                return ret
                     break
-            return
+            return (0,None)
         
         if statement[0] == "$WHILE":
             while self.simplifyExpr(statement[1]):
                 for whileBlockStatement in statement[2]:
-                    self.executeStatement(whileBlockStatement,verbose=verbose)
-            return
+                    ret = self.executeStatement(whileBlockStatement,verbose=verbose)
+                    match ret[0]:
+                        case 0:
+                            pass
+                        case _:
+                            return ret
+            return (0,None)
         
+        if statement[0] == "$DECLARE_FUNCTION":
+            pass
+   
         if verbose:
             print("executing ", statement)
 
@@ -187,55 +237,92 @@ class executer():
             # directly pull the variable name from the statement with something like statement[1][1] instead of simplifyExpr
                 
             case "$DECLARE_VAR":
-                self.memory[statement[1][1]] = None
+                #statement[2] = type
+                self.memory[statement[1][1]] = VARIABLE(type=self.simplifyExpr(statement[2]))
+
             case "$ASSIGN_VAR":
-                if not self.verifyType(statement[1][2],statement[1][1]):
-                    return 1
-                self.memory[statement[1][1]] = self.simplifyExpr(statement[2])
+                #print(statement)
+                #print(statement[1])
+                varName = statement[1][1]
+                value = self.simplifyExpr(statement[2])
+
+                if not self.verifyType(self.memory[varName].type,value):
+                    #WIP
+                    return (1,statement)
+                self.memory[varName] = VARIABLE(type=self.memory[varName].type,value=value)
+
             case "$INCREMENT":
-                if not self.verifyType("NUMBER",statement[1][1]):
-                    return 1
-                self.memory[statement[1][1]] = self.memory[statement[1][1]] + 1
+                if not self.verifyType("NUMBER",self.simplifyExpr(statement[1])):
+                    #WIP
+                    return (1,statement)
+                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value + 1
+
             case "$DECREMENT":
-                if not self.verifyType("NUMBER",statement[1][1]):
-                    return 1
-                self.memory[statement[1][1]] = self.memory[statement[1][1]] - 1
+                if not self.verifyType("NUMBER",self.simplifyExpr(statement[1])):
+                    #WIP
+                    return (1,statement)
+                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value - 1
 
             case "$DECLARE_ARR":
+                arrayName = statement[1][1]
+                size = self.simplifyExpr(statement[2])
+                type = self.simplifyExpr(statement[3])
                 newList = []
-                for i in range(self.simplifyExpr(statement[2])):
+
+                for i in range(size):
                     newList.append(None)
-                self.memory[statement[1][1]] = newList
+                self.memory[arrayName] = ARRAY(size,type,newList)
             case "$EDIT_ARR":
-                if not self.verifyType("NUMBER",statement[1][1]):
-                    return 1
-                temp = self.memory[statement[1][1]]
-                temp[self.simplifyExpr(statement[2])-1] = self.simplifyExpr(statement[3])
-                self.memory[statement[1][1]] = temp
+                arrayName = statement[1][1]
+                index = self.simplifyExpr(statement[2])
+                value = self.simplifyExpr(statement[3])
+
+                if not self.verifyType("NUMBER",index):
+                    return (1,"ON STATEMENT {0}: ARRAY INDEX '{1}' MVST BE TYPE 'NVMERVS'".format(statement,index))
+                temp = self.memory[arrayName]
+                if not self.verifyType(temp.type,value):
+                    return (1,"ON STATEMENT {0}: TYPE MISMATCH BETWEEN ARRAY '{1}' AND ELEMENT '{2}'".format(statement,arrayName,value))
+                temp.EDIT_ARR(index,value)
+                if verbose:
+                    print(temp)
+                self.memory[arrayName] = temp
+
             case "$ASSIGN_ARR":
-                self.memory[statement[1][1]] = self.simplifyExpr(statement[2])
+                arrayName = statement[1][1]
+                newArr = self.simplifyExpr(statement[2])
+                self.memory[arrayName] = newArr 
             case "$DELETE_ELE":
-                temp = self.memory[statement[1][1]]
-                temp.pop(self.simplifyExpr(statement[2])-1)
-                self.memory[statement[1][1]] = temp
+                arrayName = statement[1][1]
+                index = self.simplifyExpr(statement[2])
+                temp = self.memory[arrayName]
+
+                temp.DELETE_ELE[index]
+                self.memory[arrayName] = temp
+
             case "$APPEND":
-                self.memory[statement[1][1]] = self.memory[statement[1]].append(self.simplifyExpr(statement[2]))
+                arrayName = statement[1][1]
+                newVal = self.simplifyExpr(statement[2])
+
+                self.memory[arrayName] = self.memory[arrayName].append(newVal)
+        return (0,None)
     
     def execute(self,code,verbose=False):
         parsedCode = self.parser.parse(code)
         for statement in parsedCode:
-            match self.executeStatement(statement,verbose=verbose):
+            ret = self.executeStatement(statement,verbose=verbose)
+            match ret[0]:
+                #return codes are formatted like this: (code,message)
                 case 0:
                     pass
                 case 1:
-                    print("RETURN CODE 1: TYPE ERROR ON STATEMENT " + statement)
-                    break
+                    print("RETURN CODE 1 TYPE ERROR: " + ret[1])
+                    return
                 case 2:
-                    print("RETURN CODE 2: SYNTAX ERROR ON STATEMENT " + statement)
-                    break
+                    print("RETURN CODE 2 SYNTAX ERROR: " + ret[1])
+                    return
                 case _:
-                    print("UNKNOWN ERROR ON STATEMENT " + statement)
-                    break
+                    print("UNKNOWN ERROR: " + ret[1])
+                    return
         print("RETURN CODE 0: SUCCESSFUL EXECUTION")
 """
 EXECUTER RETURN CODES
@@ -316,5 +403,5 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
 
 
-    executer.printCode(c)
-    #executer.execute(c,verbose=False)
+    #executer.printCode(c)
+    executer.execute(c)

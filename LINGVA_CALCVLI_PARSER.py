@@ -134,8 +134,11 @@ def p_while_statement(p):
 
 def p_statement_list(p):
     '''statement_list : THEN statement
+                      | END_HEADER statement
                       | statement_list END'''
     if p[1] == "TVNC":
+        p[0] = [p[2]]
+    elif p[1] == "FINIS_TITVLI":
         p[0] = [p[2]]
     else:
         p[0] = p[1]
@@ -143,6 +146,38 @@ def p_statement_list(p):
 def p_statement_list_expand(p):
     'statement_list : statement_list statement'
     p[0] = p[1] + [p[2]]
+
+def p_argument(p):
+    '''argument : ARGUMENT_KEYWORD expression expression'''
+    p[0] = (p[2],p[3])
+
+def p_function_header(p):
+    'func_header : BEGIN_HEADER expression expression argument_list'
+    p[0] = (p[2],p[3],p[4])
+
+def p_argument_list(p):
+    '''argument_list : BEGIN_ARGUMENTS argument
+                     | NO_ARGUMENTS
+                     | argument_list END_ARGUMENTS'''
+    match p[1]:
+        case 'INITIVM_ARGVMENTORVM':
+            p[0] = [p[2]]
+        case 'NVLLVM_ARGVMENTVM':
+            p[0] = None
+        case _:
+            p[0] = p[1]
+    
+def p_function_statement(p):
+    '''statement : DECLARE_FUNCTION func_header statement_list END_FUNCTION'''
+    p[0] = ('$DECLARE_FUNCTION',p[2],p[3])
+    #p[1] = header, p[2] = statement list
+
+def p_return_statement(p):
+    '''statement : RETURN expression'''
+    p[0] = ('$RETURN',p[2])
+
+def p_call_function_statement(p):
+    '''statement : CALL_FUNCTION ID '''
 
 def p_variables(p):
     '''statement : DECLARE_VAR expression expression
@@ -236,7 +271,18 @@ FINIS ALITER TVNC
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
-    result = parser.parse(s)
+    a = """IMPERIVM MEVM INVOCO ET PRAECIPIO TIBI
+DECLARARE_FVNCTIO INITIVM_TITVLI SCRIPTVM OBA NVLLVM_ARGVMENTVM FINIS_TITVLI
+DICERE 'HELLO WORLD'
+DICERE 'HELLO WORLD'
+DICERE 'HELLO WORLD'
+DICERE 'HELLO WORLD'
+REDIRE 'HELLO WORLD'
+FINIS
+FINIS_FVNCTIO
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
+    result = parser.parse(a)
+    print(result)
     for ele in result:
         print(ele)
     #print(result)
