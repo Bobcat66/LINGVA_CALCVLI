@@ -83,6 +83,7 @@ tokens = [
     'FILE_END',
     'STRING',
     'NUMBER',
+    'RATIO',
     'CHARACTER',
     'ID'
 ] + list(reserved.values())
@@ -104,6 +105,12 @@ def t_STRING(t):
 def t_NUMBER(t):
     r'NO[.][ ](?:[IVXLCDM]+|NVLLA)'
     t.value = NVMERVS_ROMANVS.to_decimal(t.value[4:])
+    return t
+
+def t_RATIO(t):
+    r'PARS[ ](?:[IVXLCDM]+|NVLLA)[ ](?:[IVXLCDM]+)'
+    temp = t.value.split( )
+    t.value = NVMERVS_ROMANVS.to_decimal(temp[1]) / NVMERVS_ROMANVS.to_decimal(temp[2])
     return t
 
 def t_CHARACTER(t):
@@ -132,9 +139,9 @@ if __name__ == "__main__":
 
     data = '''
 IMPERO TIBI
-DECLARO INTCOVNTER PARS_NVMERI
+DECLARO INTCOVNTER NVMERVS
 ASSIGNO INTCOVNTER NO. V
-DVM MAIOR INTCOVNTER NO. NVLLA TVNC
+DVM MAIOR INTCOVNTER PARS XVII X TVNC
 DICERE 'Hello world'
 DICERE VERVM FALSVM
 DECREMENTVM INTCOVNTER

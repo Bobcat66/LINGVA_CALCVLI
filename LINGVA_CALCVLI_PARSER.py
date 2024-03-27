@@ -154,6 +154,9 @@ def p_argument(p):
 def p_function_header(p):
     'func_header : BEGIN_HEADER expression expression argument_list'
     p[0] = (p[2],p[3],p[4])
+    #p[2] = return type
+    #p[3] = name
+    #p[4] = arguments
 
 def p_argument_list(p):
     '''argument_list : BEGIN_ARGUMENTS argument
@@ -181,13 +184,13 @@ def p_return_statement(p):
     p[0] = ('$RETURN',p[2])
 
 def p_call_function_expr(p):
-    '''expression : CALL_FUNCTION ID expression_list END_ARGUMENTS
-                  | CALL_FUNCTION ID NO_ARGUMENTS'''
+    '''expression : CALL_FUNCTION expression expression_list END_ARGUMENTS
+                  | CALL_FUNCTION expression NO_ARGUMENTS'''
     p[0] = ('CALL_FUNCTION',p[2],p[3])
 
 def p_call_function_stmt(p):
-    '''statement : CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-                 | CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS'''
+    '''statement : CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+                 | CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS'''
     
     p[0] = ('$CALL_FUNCTION',p[2],p[3])
 

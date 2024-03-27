@@ -1,8 +1,16 @@
 import math
+import fractions
 
 def to_RomNum(n: int) -> str:
     if n == 0:
         return "NVLLA"
+    if isinstance(n,float):
+        frac = fractions.Fraction(n)
+        out = "PARS "
+        out += to_RomNum(frac.numerator)
+        out += " "
+        out += to_RomNum(frac.denominator)
+        return out
     out = ""
     for i in range(n // 1000):
         out += "M"
@@ -45,6 +53,9 @@ def to_RomNum(n: int) -> str:
 def to_decimal(n: str) -> int:
     if n == "NVLLA":
         return 0
+    if n[0:4] == "PARS":
+        temp = n.split( )
+        return(to_decimal(temp[1])/to_decimal(temp[2]))
     out = 0
     while len(n) > 1:
         first = n[0]
@@ -109,7 +120,9 @@ def to_decimal(n: str) -> int:
 
 if __name__ == "__main__":
     print(to_RomNum(2023))
+    print(to_RomNum(1.5))
     print(to_decimal("MDCCCXLIX"))
+    print(to_decimal("PARS III II"))
     
 
     

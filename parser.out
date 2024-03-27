@@ -52,10 +52,10 @@ Rule 42    argument_list -> argument_list END_ARGUMENTS
 Rule 43    argument_list -> argument_list argument
 Rule 44    statement -> DECLARE_FUNCTION func_header statement_list END_FUNCTION
 Rule 45    statement -> RETURN expression
-Rule 46    expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS
-Rule 47    expression -> CALL_FUNCTION ID NO_ARGUMENTS
-Rule 48    statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-Rule 49    statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+Rule 46    expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS
+Rule 47    expression -> CALL_FUNCTION expression NO_ARGUMENTS
+Rule 48    statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+Rule 49    statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
 Rule 50    expression_list -> BEGIN_ARGUMENTS expression
 Rule 51    expression_list -> expression_list expression
 Rule 52    statement -> DECLARE_VAR expression expression
@@ -109,7 +109,7 @@ FILE_BEGINNING       : 1
 FILE_END             : 2
 GREATER              : 25
 GREATER_OR_EQUAL     : 26
-ID                   : 15 46 47 48 49
+ID                   : 15
 IF                   : 29
 INCREMENT            : 54
 LENGTH               : 64
@@ -139,7 +139,7 @@ Nonterminals, with rules where they appear
 
 argument             : 40 43
 argument_list        : 39 42 43
-expression           : 4 5 16 16 17 17 18 18 19 19 20 20 21 21 22 22 23 24 24 25 25 26 26 27 27 28 28 29 30 33 38 38 39 39 45 50 51 52 52 53 53 54 55 56 56 57 57 57 58 58 58 59 59 60 60 61 61 62 62 63 64
+expression           : 4 5 16 16 17 17 18 18 19 19 20 20 21 21 22 22 23 24 24 25 25 26 26 27 27 28 28 29 30 33 38 38 39 39 45 46 47 48 49 50 51 52 52 53 53 54 55 56 56 57 57 57 58 58 58 59 59 60 60 61 61 62 62 63 64
 expression_list      : 46 48 51
 func_header          : 44
 if_statement         : 30 31 32
@@ -170,8 +170,8 @@ state 1
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -213,8 +213,8 @@ state 2
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -320,8 +320,8 @@ state 5
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -397,8 +397,8 @@ state 7
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -472,8 +472,8 @@ state 9
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -513,11 +513,70 @@ state 9
 
 state 10
 
-    (48) statement -> CALL_FUNCTION_STATEMENT . ID expression_list END_ARGUMENTS
-    (49) statement -> CALL_FUNCTION_STATEMENT . ID NO_ARGUMENTS
+    (48) statement -> CALL_FUNCTION_STATEMENT . expression expression_list END_ARGUMENTS
+    (49) statement -> CALL_FUNCTION_STATEMENT . expression NO_ARGUMENTS
+    (5) expression -> . PROMPT expression
+    (6) expression -> . STRING
+    (7) expression -> . NUMBER
+    (8) expression -> . CHARACTER
+    (9) expression -> . TRUE
+    (10) expression -> . FALSE
+    (11) expression -> . STRING_TYPE
+    (12) expression -> . NUMBER_TYPE
+    (13) expression -> . RATIO_TYPE
+    (14) expression -> . BOOLEAN_TYPE
+    (15) expression -> . ID
+    (16) expression -> . ADD expression expression
+    (17) expression -> . SUBTRACT expression expression
+    (18) expression -> . MULTIPLY expression expression
+    (19) expression -> . DIVIDE expression expression
+    (20) expression -> . AND expression expression
+    (21) expression -> . OR expression expression
+    (22) expression -> . XOR expression expression
+    (23) expression -> . NOT expression
+    (24) expression -> . EQUALS expression expression
+    (25) expression -> . GREATER expression expression
+    (26) expression -> . GREATER_OR_EQUAL expression expression
+    (27) expression -> . LESSER expression expression
+    (28) expression -> . LESSER_OR_EQUAL expression expression
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
+    (56) expression -> . CAST_VAR expression expression
+    (62) expression -> . RETRIEVE_ELE expression expression
+    (63) expression -> . CONVERT_TO_ARRAY expression
+    (64) expression -> . LENGTH expression
 
-    ID              shift and go to state 59
+    PROMPT          shift and go to state 23
+    STRING          shift and go to state 24
+    NUMBER          shift and go to state 25
+    CHARACTER       shift and go to state 26
+    TRUE            shift and go to state 27
+    FALSE           shift and go to state 28
+    STRING_TYPE     shift and go to state 29
+    NUMBER_TYPE     shift and go to state 30
+    RATIO_TYPE      shift and go to state 31
+    BOOLEAN_TYPE    shift and go to state 32
+    ID              shift and go to state 33
+    ADD             shift and go to state 34
+    SUBTRACT        shift and go to state 35
+    MULTIPLY        shift and go to state 36
+    DIVIDE          shift and go to state 37
+    AND             shift and go to state 38
+    OR              shift and go to state 39
+    XOR             shift and go to state 40
+    NOT             shift and go to state 41
+    EQUALS          shift and go to state 42
+    GREATER         shift and go to state 43
+    GREATER_OR_EQUAL shift and go to state 44
+    LESSER          shift and go to state 45
+    LESSER_OR_EQUAL shift and go to state 46
+    CALL_FUNCTION   shift and go to state 47
+    CAST_VAR        shift and go to state 48
+    RETRIEVE_ELE    shift and go to state 49
+    CONVERT_TO_ARRAY shift and go to state 50
+    LENGTH          shift and go to state 51
 
+    expression                     shift and go to state 59
 
 state 11
 
@@ -546,8 +605,8 @@ state 11
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -612,8 +671,8 @@ state 12
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -678,8 +737,8 @@ state 13
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -744,8 +803,8 @@ state 14
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -810,8 +869,8 @@ state 15
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -876,8 +935,8 @@ state 16
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -942,8 +1001,8 @@ state 17
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -1008,8 +1067,8 @@ state 18
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -1074,8 +1133,8 @@ state 19
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -1140,8 +1199,8 @@ state 20
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -1257,8 +1316,8 @@ state 23
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -1324,6 +1383,8 @@ state 24
     END_FUNCTION    reduce using rule 6 (expression -> STRING .)
     THEN            reduce using rule 6 (expression -> STRING .)
     END_HEADER      reduce using rule 6 (expression -> STRING .)
+    NO_ARGUMENTS    reduce using rule 6 (expression -> STRING .)
+    BEGIN_ARGUMENTS reduce using rule 6 (expression -> STRING .)
     PROMPT          reduce using rule 6 (expression -> STRING .)
     STRING          reduce using rule 6 (expression -> STRING .)
     NUMBER          reduce using rule 6 (expression -> STRING .)
@@ -1353,8 +1414,6 @@ state 24
     RETRIEVE_ELE    reduce using rule 6 (expression -> STRING .)
     CONVERT_TO_ARRAY reduce using rule 6 (expression -> STRING .)
     LENGTH          reduce using rule 6 (expression -> STRING .)
-    BEGIN_ARGUMENTS reduce using rule 6 (expression -> STRING .)
-    NO_ARGUMENTS    reduce using rule 6 (expression -> STRING .)
     END_ARGUMENTS   reduce using rule 6 (expression -> STRING .)
     ARGUMENT_KEYWORD reduce using rule 6 (expression -> STRING .)
 
@@ -1387,6 +1446,8 @@ state 25
     END_FUNCTION    reduce using rule 7 (expression -> NUMBER .)
     THEN            reduce using rule 7 (expression -> NUMBER .)
     END_HEADER      reduce using rule 7 (expression -> NUMBER .)
+    NO_ARGUMENTS    reduce using rule 7 (expression -> NUMBER .)
+    BEGIN_ARGUMENTS reduce using rule 7 (expression -> NUMBER .)
     PROMPT          reduce using rule 7 (expression -> NUMBER .)
     STRING          reduce using rule 7 (expression -> NUMBER .)
     NUMBER          reduce using rule 7 (expression -> NUMBER .)
@@ -1416,8 +1477,6 @@ state 25
     RETRIEVE_ELE    reduce using rule 7 (expression -> NUMBER .)
     CONVERT_TO_ARRAY reduce using rule 7 (expression -> NUMBER .)
     LENGTH          reduce using rule 7 (expression -> NUMBER .)
-    BEGIN_ARGUMENTS reduce using rule 7 (expression -> NUMBER .)
-    NO_ARGUMENTS    reduce using rule 7 (expression -> NUMBER .)
     END_ARGUMENTS   reduce using rule 7 (expression -> NUMBER .)
     ARGUMENT_KEYWORD reduce using rule 7 (expression -> NUMBER .)
 
@@ -1450,6 +1509,8 @@ state 26
     END_FUNCTION    reduce using rule 8 (expression -> CHARACTER .)
     THEN            reduce using rule 8 (expression -> CHARACTER .)
     END_HEADER      reduce using rule 8 (expression -> CHARACTER .)
+    NO_ARGUMENTS    reduce using rule 8 (expression -> CHARACTER .)
+    BEGIN_ARGUMENTS reduce using rule 8 (expression -> CHARACTER .)
     PROMPT          reduce using rule 8 (expression -> CHARACTER .)
     STRING          reduce using rule 8 (expression -> CHARACTER .)
     NUMBER          reduce using rule 8 (expression -> CHARACTER .)
@@ -1479,8 +1540,6 @@ state 26
     RETRIEVE_ELE    reduce using rule 8 (expression -> CHARACTER .)
     CONVERT_TO_ARRAY reduce using rule 8 (expression -> CHARACTER .)
     LENGTH          reduce using rule 8 (expression -> CHARACTER .)
-    BEGIN_ARGUMENTS reduce using rule 8 (expression -> CHARACTER .)
-    NO_ARGUMENTS    reduce using rule 8 (expression -> CHARACTER .)
     END_ARGUMENTS   reduce using rule 8 (expression -> CHARACTER .)
     ARGUMENT_KEYWORD reduce using rule 8 (expression -> CHARACTER .)
 
@@ -1513,6 +1572,8 @@ state 27
     END_FUNCTION    reduce using rule 9 (expression -> TRUE .)
     THEN            reduce using rule 9 (expression -> TRUE .)
     END_HEADER      reduce using rule 9 (expression -> TRUE .)
+    NO_ARGUMENTS    reduce using rule 9 (expression -> TRUE .)
+    BEGIN_ARGUMENTS reduce using rule 9 (expression -> TRUE .)
     PROMPT          reduce using rule 9 (expression -> TRUE .)
     STRING          reduce using rule 9 (expression -> TRUE .)
     NUMBER          reduce using rule 9 (expression -> TRUE .)
@@ -1542,8 +1603,6 @@ state 27
     RETRIEVE_ELE    reduce using rule 9 (expression -> TRUE .)
     CONVERT_TO_ARRAY reduce using rule 9 (expression -> TRUE .)
     LENGTH          reduce using rule 9 (expression -> TRUE .)
-    BEGIN_ARGUMENTS reduce using rule 9 (expression -> TRUE .)
-    NO_ARGUMENTS    reduce using rule 9 (expression -> TRUE .)
     END_ARGUMENTS   reduce using rule 9 (expression -> TRUE .)
     ARGUMENT_KEYWORD reduce using rule 9 (expression -> TRUE .)
 
@@ -1576,6 +1635,8 @@ state 28
     END_FUNCTION    reduce using rule 10 (expression -> FALSE .)
     THEN            reduce using rule 10 (expression -> FALSE .)
     END_HEADER      reduce using rule 10 (expression -> FALSE .)
+    NO_ARGUMENTS    reduce using rule 10 (expression -> FALSE .)
+    BEGIN_ARGUMENTS reduce using rule 10 (expression -> FALSE .)
     PROMPT          reduce using rule 10 (expression -> FALSE .)
     STRING          reduce using rule 10 (expression -> FALSE .)
     NUMBER          reduce using rule 10 (expression -> FALSE .)
@@ -1605,8 +1666,6 @@ state 28
     RETRIEVE_ELE    reduce using rule 10 (expression -> FALSE .)
     CONVERT_TO_ARRAY reduce using rule 10 (expression -> FALSE .)
     LENGTH          reduce using rule 10 (expression -> FALSE .)
-    BEGIN_ARGUMENTS reduce using rule 10 (expression -> FALSE .)
-    NO_ARGUMENTS    reduce using rule 10 (expression -> FALSE .)
     END_ARGUMENTS   reduce using rule 10 (expression -> FALSE .)
     ARGUMENT_KEYWORD reduce using rule 10 (expression -> FALSE .)
 
@@ -1639,6 +1698,8 @@ state 29
     END_FUNCTION    reduce using rule 11 (expression -> STRING_TYPE .)
     THEN            reduce using rule 11 (expression -> STRING_TYPE .)
     END_HEADER      reduce using rule 11 (expression -> STRING_TYPE .)
+    NO_ARGUMENTS    reduce using rule 11 (expression -> STRING_TYPE .)
+    BEGIN_ARGUMENTS reduce using rule 11 (expression -> STRING_TYPE .)
     PROMPT          reduce using rule 11 (expression -> STRING_TYPE .)
     STRING          reduce using rule 11 (expression -> STRING_TYPE .)
     NUMBER          reduce using rule 11 (expression -> STRING_TYPE .)
@@ -1668,8 +1729,6 @@ state 29
     RETRIEVE_ELE    reduce using rule 11 (expression -> STRING_TYPE .)
     CONVERT_TO_ARRAY reduce using rule 11 (expression -> STRING_TYPE .)
     LENGTH          reduce using rule 11 (expression -> STRING_TYPE .)
-    BEGIN_ARGUMENTS reduce using rule 11 (expression -> STRING_TYPE .)
-    NO_ARGUMENTS    reduce using rule 11 (expression -> STRING_TYPE .)
     END_ARGUMENTS   reduce using rule 11 (expression -> STRING_TYPE .)
     ARGUMENT_KEYWORD reduce using rule 11 (expression -> STRING_TYPE .)
 
@@ -1702,6 +1761,8 @@ state 30
     END_FUNCTION    reduce using rule 12 (expression -> NUMBER_TYPE .)
     THEN            reduce using rule 12 (expression -> NUMBER_TYPE .)
     END_HEADER      reduce using rule 12 (expression -> NUMBER_TYPE .)
+    NO_ARGUMENTS    reduce using rule 12 (expression -> NUMBER_TYPE .)
+    BEGIN_ARGUMENTS reduce using rule 12 (expression -> NUMBER_TYPE .)
     PROMPT          reduce using rule 12 (expression -> NUMBER_TYPE .)
     STRING          reduce using rule 12 (expression -> NUMBER_TYPE .)
     NUMBER          reduce using rule 12 (expression -> NUMBER_TYPE .)
@@ -1731,8 +1792,6 @@ state 30
     RETRIEVE_ELE    reduce using rule 12 (expression -> NUMBER_TYPE .)
     CONVERT_TO_ARRAY reduce using rule 12 (expression -> NUMBER_TYPE .)
     LENGTH          reduce using rule 12 (expression -> NUMBER_TYPE .)
-    BEGIN_ARGUMENTS reduce using rule 12 (expression -> NUMBER_TYPE .)
-    NO_ARGUMENTS    reduce using rule 12 (expression -> NUMBER_TYPE .)
     END_ARGUMENTS   reduce using rule 12 (expression -> NUMBER_TYPE .)
     ARGUMENT_KEYWORD reduce using rule 12 (expression -> NUMBER_TYPE .)
 
@@ -1765,6 +1824,8 @@ state 31
     END_FUNCTION    reduce using rule 13 (expression -> RATIO_TYPE .)
     THEN            reduce using rule 13 (expression -> RATIO_TYPE .)
     END_HEADER      reduce using rule 13 (expression -> RATIO_TYPE .)
+    NO_ARGUMENTS    reduce using rule 13 (expression -> RATIO_TYPE .)
+    BEGIN_ARGUMENTS reduce using rule 13 (expression -> RATIO_TYPE .)
     PROMPT          reduce using rule 13 (expression -> RATIO_TYPE .)
     STRING          reduce using rule 13 (expression -> RATIO_TYPE .)
     NUMBER          reduce using rule 13 (expression -> RATIO_TYPE .)
@@ -1794,8 +1855,6 @@ state 31
     RETRIEVE_ELE    reduce using rule 13 (expression -> RATIO_TYPE .)
     CONVERT_TO_ARRAY reduce using rule 13 (expression -> RATIO_TYPE .)
     LENGTH          reduce using rule 13 (expression -> RATIO_TYPE .)
-    BEGIN_ARGUMENTS reduce using rule 13 (expression -> RATIO_TYPE .)
-    NO_ARGUMENTS    reduce using rule 13 (expression -> RATIO_TYPE .)
     END_ARGUMENTS   reduce using rule 13 (expression -> RATIO_TYPE .)
     ARGUMENT_KEYWORD reduce using rule 13 (expression -> RATIO_TYPE .)
 
@@ -1828,6 +1887,8 @@ state 32
     END_FUNCTION    reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     THEN            reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     END_HEADER      reduce using rule 14 (expression -> BOOLEAN_TYPE .)
+    NO_ARGUMENTS    reduce using rule 14 (expression -> BOOLEAN_TYPE .)
+    BEGIN_ARGUMENTS reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     PROMPT          reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     STRING          reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     NUMBER          reduce using rule 14 (expression -> BOOLEAN_TYPE .)
@@ -1857,8 +1918,6 @@ state 32
     RETRIEVE_ELE    reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     CONVERT_TO_ARRAY reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     LENGTH          reduce using rule 14 (expression -> BOOLEAN_TYPE .)
-    BEGIN_ARGUMENTS reduce using rule 14 (expression -> BOOLEAN_TYPE .)
-    NO_ARGUMENTS    reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     END_ARGUMENTS   reduce using rule 14 (expression -> BOOLEAN_TYPE .)
     ARGUMENT_KEYWORD reduce using rule 14 (expression -> BOOLEAN_TYPE .)
 
@@ -1891,6 +1950,8 @@ state 33
     END_FUNCTION    reduce using rule 15 (expression -> ID .)
     THEN            reduce using rule 15 (expression -> ID .)
     END_HEADER      reduce using rule 15 (expression -> ID .)
+    NO_ARGUMENTS    reduce using rule 15 (expression -> ID .)
+    BEGIN_ARGUMENTS reduce using rule 15 (expression -> ID .)
     PROMPT          reduce using rule 15 (expression -> ID .)
     STRING          reduce using rule 15 (expression -> ID .)
     NUMBER          reduce using rule 15 (expression -> ID .)
@@ -1920,8 +1981,6 @@ state 33
     RETRIEVE_ELE    reduce using rule 15 (expression -> ID .)
     CONVERT_TO_ARRAY reduce using rule 15 (expression -> ID .)
     LENGTH          reduce using rule 15 (expression -> ID .)
-    BEGIN_ARGUMENTS reduce using rule 15 (expression -> ID .)
-    NO_ARGUMENTS    reduce using rule 15 (expression -> ID .)
     END_ARGUMENTS   reduce using rule 15 (expression -> ID .)
     ARGUMENT_KEYWORD reduce using rule 15 (expression -> ID .)
 
@@ -1953,8 +2012,8 @@ state 34
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2019,8 +2078,8 @@ state 35
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2085,8 +2144,8 @@ state 36
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2151,8 +2210,8 @@ state 37
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2217,8 +2276,8 @@ state 38
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2283,8 +2342,8 @@ state 39
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2349,8 +2408,8 @@ state 40
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2415,8 +2474,8 @@ state 41
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2481,8 +2540,8 @@ state 42
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2547,8 +2606,8 @@ state 43
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2613,8 +2672,8 @@ state 44
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2679,8 +2738,8 @@ state 45
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2745,8 +2804,8 @@ state 46
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2786,11 +2845,70 @@ state 46
 
 state 47
 
-    (46) expression -> CALL_FUNCTION . ID expression_list END_ARGUMENTS
-    (47) expression -> CALL_FUNCTION . ID NO_ARGUMENTS
+    (46) expression -> CALL_FUNCTION . expression expression_list END_ARGUMENTS
+    (47) expression -> CALL_FUNCTION . expression NO_ARGUMENTS
+    (5) expression -> . PROMPT expression
+    (6) expression -> . STRING
+    (7) expression -> . NUMBER
+    (8) expression -> . CHARACTER
+    (9) expression -> . TRUE
+    (10) expression -> . FALSE
+    (11) expression -> . STRING_TYPE
+    (12) expression -> . NUMBER_TYPE
+    (13) expression -> . RATIO_TYPE
+    (14) expression -> . BOOLEAN_TYPE
+    (15) expression -> . ID
+    (16) expression -> . ADD expression expression
+    (17) expression -> . SUBTRACT expression expression
+    (18) expression -> . MULTIPLY expression expression
+    (19) expression -> . DIVIDE expression expression
+    (20) expression -> . AND expression expression
+    (21) expression -> . OR expression expression
+    (22) expression -> . XOR expression expression
+    (23) expression -> . NOT expression
+    (24) expression -> . EQUALS expression expression
+    (25) expression -> . GREATER expression expression
+    (26) expression -> . GREATER_OR_EQUAL expression expression
+    (27) expression -> . LESSER expression expression
+    (28) expression -> . LESSER_OR_EQUAL expression expression
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
+    (56) expression -> . CAST_VAR expression expression
+    (62) expression -> . RETRIEVE_ELE expression expression
+    (63) expression -> . CONVERT_TO_ARRAY expression
+    (64) expression -> . LENGTH expression
 
-    ID              shift and go to state 84
+    PROMPT          shift and go to state 23
+    STRING          shift and go to state 24
+    NUMBER          shift and go to state 25
+    CHARACTER       shift and go to state 26
+    TRUE            shift and go to state 27
+    FALSE           shift and go to state 28
+    STRING_TYPE     shift and go to state 29
+    NUMBER_TYPE     shift and go to state 30
+    RATIO_TYPE      shift and go to state 31
+    BOOLEAN_TYPE    shift and go to state 32
+    ID              shift and go to state 33
+    ADD             shift and go to state 34
+    SUBTRACT        shift and go to state 35
+    MULTIPLY        shift and go to state 36
+    DIVIDE          shift and go to state 37
+    AND             shift and go to state 38
+    OR              shift and go to state 39
+    XOR             shift and go to state 40
+    NOT             shift and go to state 41
+    EQUALS          shift and go to state 42
+    GREATER         shift and go to state 43
+    GREATER_OR_EQUAL shift and go to state 44
+    LESSER          shift and go to state 45
+    LESSER_OR_EQUAL shift and go to state 46
+    CALL_FUNCTION   shift and go to state 47
+    CAST_VAR        shift and go to state 48
+    RETRIEVE_ELE    shift and go to state 49
+    CONVERT_TO_ARRAY shift and go to state 50
+    LENGTH          shift and go to state 51
 
+    expression                     shift and go to state 84
 
 state 48
 
@@ -2819,8 +2937,8 @@ state 48
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2885,8 +3003,8 @@ state 49
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -2951,8 +3069,8 @@ state 50
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3017,8 +3135,8 @@ state 51
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3111,8 +3229,8 @@ state 53
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3216,8 +3334,8 @@ state 57
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3285,8 +3403,8 @@ state 58
 
 state 59
 
-    (48) statement -> CALL_FUNCTION_STATEMENT ID . expression_list END_ARGUMENTS
-    (49) statement -> CALL_FUNCTION_STATEMENT ID . NO_ARGUMENTS
+    (48) statement -> CALL_FUNCTION_STATEMENT expression . expression_list END_ARGUMENTS
+    (49) statement -> CALL_FUNCTION_STATEMENT expression . NO_ARGUMENTS
     (50) expression_list -> . BEGIN_ARGUMENTS expression
     (51) expression_list -> . expression_list expression
 
@@ -3322,8 +3440,8 @@ state 60
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3388,8 +3506,8 @@ state 61
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3510,8 +3628,8 @@ state 64
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3576,8 +3694,8 @@ state 65
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3642,8 +3760,8 @@ state 66
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3708,8 +3826,8 @@ state 67
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3774,8 +3892,8 @@ state 68
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3854,6 +3972,8 @@ state 70
     END_FUNCTION    reduce using rule 5 (expression -> PROMPT expression .)
     THEN            reduce using rule 5 (expression -> PROMPT expression .)
     END_HEADER      reduce using rule 5 (expression -> PROMPT expression .)
+    NO_ARGUMENTS    reduce using rule 5 (expression -> PROMPT expression .)
+    BEGIN_ARGUMENTS reduce using rule 5 (expression -> PROMPT expression .)
     PROMPT          reduce using rule 5 (expression -> PROMPT expression .)
     STRING          reduce using rule 5 (expression -> PROMPT expression .)
     NUMBER          reduce using rule 5 (expression -> PROMPT expression .)
@@ -3883,8 +4003,6 @@ state 70
     RETRIEVE_ELE    reduce using rule 5 (expression -> PROMPT expression .)
     CONVERT_TO_ARRAY reduce using rule 5 (expression -> PROMPT expression .)
     LENGTH          reduce using rule 5 (expression -> PROMPT expression .)
-    BEGIN_ARGUMENTS reduce using rule 5 (expression -> PROMPT expression .)
-    NO_ARGUMENTS    reduce using rule 5 (expression -> PROMPT expression .)
     END_ARGUMENTS   reduce using rule 5 (expression -> PROMPT expression .)
     ARGUMENT_KEYWORD reduce using rule 5 (expression -> PROMPT expression .)
 
@@ -3916,8 +4034,8 @@ state 71
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -3982,8 +4100,8 @@ state 72
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4048,8 +4166,8 @@ state 73
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4114,8 +4232,8 @@ state 74
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4180,8 +4298,8 @@ state 75
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4246,8 +4364,8 @@ state 76
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4312,8 +4430,8 @@ state 77
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4379,6 +4497,8 @@ state 78
     END_FUNCTION    reduce using rule 23 (expression -> NOT expression .)
     THEN            reduce using rule 23 (expression -> NOT expression .)
     END_HEADER      reduce using rule 23 (expression -> NOT expression .)
+    NO_ARGUMENTS    reduce using rule 23 (expression -> NOT expression .)
+    BEGIN_ARGUMENTS reduce using rule 23 (expression -> NOT expression .)
     PROMPT          reduce using rule 23 (expression -> NOT expression .)
     STRING          reduce using rule 23 (expression -> NOT expression .)
     NUMBER          reduce using rule 23 (expression -> NOT expression .)
@@ -4408,8 +4528,6 @@ state 78
     RETRIEVE_ELE    reduce using rule 23 (expression -> NOT expression .)
     CONVERT_TO_ARRAY reduce using rule 23 (expression -> NOT expression .)
     LENGTH          reduce using rule 23 (expression -> NOT expression .)
-    BEGIN_ARGUMENTS reduce using rule 23 (expression -> NOT expression .)
-    NO_ARGUMENTS    reduce using rule 23 (expression -> NOT expression .)
     END_ARGUMENTS   reduce using rule 23 (expression -> NOT expression .)
     ARGUMENT_KEYWORD reduce using rule 23 (expression -> NOT expression .)
 
@@ -4441,8 +4559,8 @@ state 79
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4507,8 +4625,8 @@ state 80
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4573,8 +4691,8 @@ state 81
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4639,8 +4757,8 @@ state 82
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4705,8 +4823,8 @@ state 83
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4746,8 +4864,8 @@ state 83
 
 state 84
 
-    (46) expression -> CALL_FUNCTION ID . expression_list END_ARGUMENTS
-    (47) expression -> CALL_FUNCTION ID . NO_ARGUMENTS
+    (46) expression -> CALL_FUNCTION expression . expression_list END_ARGUMENTS
+    (47) expression -> CALL_FUNCTION expression . NO_ARGUMENTS
     (50) expression_list -> . BEGIN_ARGUMENTS expression
     (51) expression_list -> . expression_list expression
 
@@ -4783,8 +4901,8 @@ state 85
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4849,8 +4967,8 @@ state 86
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -4916,6 +5034,8 @@ state 87
     END_FUNCTION    reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     THEN            reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     END_HEADER      reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
+    NO_ARGUMENTS    reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
+    BEGIN_ARGUMENTS reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     PROMPT          reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     STRING          reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     NUMBER          reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
@@ -4945,8 +5065,6 @@ state 87
     RETRIEVE_ELE    reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     CONVERT_TO_ARRAY reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     LENGTH          reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
-    BEGIN_ARGUMENTS reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
-    NO_ARGUMENTS    reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     END_ARGUMENTS   reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
     ARGUMENT_KEYWORD reduce using rule 63 (expression -> CONVERT_TO_ARRAY expression .)
 
@@ -4979,6 +5097,8 @@ state 88
     END_FUNCTION    reduce using rule 64 (expression -> LENGTH expression .)
     THEN            reduce using rule 64 (expression -> LENGTH expression .)
     END_HEADER      reduce using rule 64 (expression -> LENGTH expression .)
+    NO_ARGUMENTS    reduce using rule 64 (expression -> LENGTH expression .)
+    BEGIN_ARGUMENTS reduce using rule 64 (expression -> LENGTH expression .)
     PROMPT          reduce using rule 64 (expression -> LENGTH expression .)
     STRING          reduce using rule 64 (expression -> LENGTH expression .)
     NUMBER          reduce using rule 64 (expression -> LENGTH expression .)
@@ -5008,8 +5128,6 @@ state 88
     RETRIEVE_ELE    reduce using rule 64 (expression -> LENGTH expression .)
     CONVERT_TO_ARRAY reduce using rule 64 (expression -> LENGTH expression .)
     LENGTH          reduce using rule 64 (expression -> LENGTH expression .)
-    BEGIN_ARGUMENTS reduce using rule 64 (expression -> LENGTH expression .)
-    NO_ARGUMENTS    reduce using rule 64 (expression -> LENGTH expression .)
     END_ARGUMENTS   reduce using rule 64 (expression -> LENGTH expression .)
     ARGUMENT_KEYWORD reduce using rule 64 (expression -> LENGTH expression .)
 
@@ -5037,8 +5155,8 @@ state 90
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5083,8 +5201,8 @@ state 91
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5125,8 +5243,8 @@ state 92
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5169,8 +5287,8 @@ state 93
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5215,8 +5333,8 @@ state 94
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5278,8 +5396,8 @@ state 95
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -5319,7 +5437,7 @@ state 95
 
 state 96
 
-    (48) statement -> CALL_FUNCTION_STATEMENT ID expression_list . END_ARGUMENTS
+    (48) statement -> CALL_FUNCTION_STATEMENT expression expression_list . END_ARGUMENTS
     (51) expression_list -> expression_list . expression
     (5) expression -> . PROMPT expression
     (6) expression -> . STRING
@@ -5345,14 +5463,14 @@ state 96
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
     (64) expression -> . LENGTH expression
 
-    END_ARGUMENTS   shift and go to state 131
+    END_ARGUMENTS   shift and go to state 132
     PROMPT          shift and go to state 23
     STRING          shift and go to state 24
     NUMBER          shift and go to state 25
@@ -5383,34 +5501,34 @@ state 96
     CONVERT_TO_ARRAY shift and go to state 50
     LENGTH          shift and go to state 51
 
-    expression                     shift and go to state 132
+    expression                     shift and go to state 131
 
 state 97
 
-    (49) statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .
+    (49) statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .
 
-    FILE_END        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    PRINT           reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    WHILE           reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    DECLARE_FUNCTION reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    RETURN          reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    CALL_FUNCTION_STATEMENT reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    DECLARE_VAR     reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    ASSIGN_VAR      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    INCREMENT       reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    DECREMENT       reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    DECLARE_ARR     reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    EDIT_ARR        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    ASSIGN_ARR      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    DELETE_ELE      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    APPEND          reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    IF              reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    $end            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    END             reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    END_LOOP        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    ELIF            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    ELSE            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
-    END_FUNCTION    reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS .)
+    FILE_END        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    PRINT           reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    WHILE           reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    DECLARE_FUNCTION reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    RETURN          reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    CALL_FUNCTION_STATEMENT reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    DECLARE_VAR     reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    ASSIGN_VAR      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    INCREMENT       reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    DECREMENT       reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    DECLARE_ARR     reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    EDIT_ARR        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    ASSIGN_ARR      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    DELETE_ELE      reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    APPEND          reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    IF              reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    $end            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    END             reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    END_LOOP        reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    ELIF            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    ELSE            reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
+    END_FUNCTION    reduce using rule 49 (statement -> CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS .)
 
 
 state 98
@@ -5440,8 +5558,8 @@ state 98
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -5562,8 +5680,8 @@ state 101
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -5628,8 +5746,8 @@ state 102
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -5761,8 +5879,8 @@ state 106
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -5827,6 +5945,8 @@ state 107
     END_FUNCTION    reduce using rule 16 (expression -> ADD expression expression .)
     THEN            reduce using rule 16 (expression -> ADD expression expression .)
     END_HEADER      reduce using rule 16 (expression -> ADD expression expression .)
+    NO_ARGUMENTS    reduce using rule 16 (expression -> ADD expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 16 (expression -> ADD expression expression .)
     PROMPT          reduce using rule 16 (expression -> ADD expression expression .)
     STRING          reduce using rule 16 (expression -> ADD expression expression .)
     NUMBER          reduce using rule 16 (expression -> ADD expression expression .)
@@ -5856,8 +5976,6 @@ state 107
     RETRIEVE_ELE    reduce using rule 16 (expression -> ADD expression expression .)
     CONVERT_TO_ARRAY reduce using rule 16 (expression -> ADD expression expression .)
     LENGTH          reduce using rule 16 (expression -> ADD expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 16 (expression -> ADD expression expression .)
-    NO_ARGUMENTS    reduce using rule 16 (expression -> ADD expression expression .)
     END_ARGUMENTS   reduce using rule 16 (expression -> ADD expression expression .)
     ARGUMENT_KEYWORD reduce using rule 16 (expression -> ADD expression expression .)
 
@@ -5890,6 +6008,8 @@ state 108
     END_FUNCTION    reduce using rule 17 (expression -> SUBTRACT expression expression .)
     THEN            reduce using rule 17 (expression -> SUBTRACT expression expression .)
     END_HEADER      reduce using rule 17 (expression -> SUBTRACT expression expression .)
+    NO_ARGUMENTS    reduce using rule 17 (expression -> SUBTRACT expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 17 (expression -> SUBTRACT expression expression .)
     PROMPT          reduce using rule 17 (expression -> SUBTRACT expression expression .)
     STRING          reduce using rule 17 (expression -> SUBTRACT expression expression .)
     NUMBER          reduce using rule 17 (expression -> SUBTRACT expression expression .)
@@ -5919,8 +6039,6 @@ state 108
     RETRIEVE_ELE    reduce using rule 17 (expression -> SUBTRACT expression expression .)
     CONVERT_TO_ARRAY reduce using rule 17 (expression -> SUBTRACT expression expression .)
     LENGTH          reduce using rule 17 (expression -> SUBTRACT expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 17 (expression -> SUBTRACT expression expression .)
-    NO_ARGUMENTS    reduce using rule 17 (expression -> SUBTRACT expression expression .)
     END_ARGUMENTS   reduce using rule 17 (expression -> SUBTRACT expression expression .)
     ARGUMENT_KEYWORD reduce using rule 17 (expression -> SUBTRACT expression expression .)
 
@@ -5953,6 +6071,8 @@ state 109
     END_FUNCTION    reduce using rule 18 (expression -> MULTIPLY expression expression .)
     THEN            reduce using rule 18 (expression -> MULTIPLY expression expression .)
     END_HEADER      reduce using rule 18 (expression -> MULTIPLY expression expression .)
+    NO_ARGUMENTS    reduce using rule 18 (expression -> MULTIPLY expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 18 (expression -> MULTIPLY expression expression .)
     PROMPT          reduce using rule 18 (expression -> MULTIPLY expression expression .)
     STRING          reduce using rule 18 (expression -> MULTIPLY expression expression .)
     NUMBER          reduce using rule 18 (expression -> MULTIPLY expression expression .)
@@ -5982,8 +6102,6 @@ state 109
     RETRIEVE_ELE    reduce using rule 18 (expression -> MULTIPLY expression expression .)
     CONVERT_TO_ARRAY reduce using rule 18 (expression -> MULTIPLY expression expression .)
     LENGTH          reduce using rule 18 (expression -> MULTIPLY expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 18 (expression -> MULTIPLY expression expression .)
-    NO_ARGUMENTS    reduce using rule 18 (expression -> MULTIPLY expression expression .)
     END_ARGUMENTS   reduce using rule 18 (expression -> MULTIPLY expression expression .)
     ARGUMENT_KEYWORD reduce using rule 18 (expression -> MULTIPLY expression expression .)
 
@@ -6016,6 +6134,8 @@ state 110
     END_FUNCTION    reduce using rule 19 (expression -> DIVIDE expression expression .)
     THEN            reduce using rule 19 (expression -> DIVIDE expression expression .)
     END_HEADER      reduce using rule 19 (expression -> DIVIDE expression expression .)
+    NO_ARGUMENTS    reduce using rule 19 (expression -> DIVIDE expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 19 (expression -> DIVIDE expression expression .)
     PROMPT          reduce using rule 19 (expression -> DIVIDE expression expression .)
     STRING          reduce using rule 19 (expression -> DIVIDE expression expression .)
     NUMBER          reduce using rule 19 (expression -> DIVIDE expression expression .)
@@ -6045,8 +6165,6 @@ state 110
     RETRIEVE_ELE    reduce using rule 19 (expression -> DIVIDE expression expression .)
     CONVERT_TO_ARRAY reduce using rule 19 (expression -> DIVIDE expression expression .)
     LENGTH          reduce using rule 19 (expression -> DIVIDE expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 19 (expression -> DIVIDE expression expression .)
-    NO_ARGUMENTS    reduce using rule 19 (expression -> DIVIDE expression expression .)
     END_ARGUMENTS   reduce using rule 19 (expression -> DIVIDE expression expression .)
     ARGUMENT_KEYWORD reduce using rule 19 (expression -> DIVIDE expression expression .)
 
@@ -6079,6 +6197,8 @@ state 111
     END_FUNCTION    reduce using rule 20 (expression -> AND expression expression .)
     THEN            reduce using rule 20 (expression -> AND expression expression .)
     END_HEADER      reduce using rule 20 (expression -> AND expression expression .)
+    NO_ARGUMENTS    reduce using rule 20 (expression -> AND expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 20 (expression -> AND expression expression .)
     PROMPT          reduce using rule 20 (expression -> AND expression expression .)
     STRING          reduce using rule 20 (expression -> AND expression expression .)
     NUMBER          reduce using rule 20 (expression -> AND expression expression .)
@@ -6108,8 +6228,6 @@ state 111
     RETRIEVE_ELE    reduce using rule 20 (expression -> AND expression expression .)
     CONVERT_TO_ARRAY reduce using rule 20 (expression -> AND expression expression .)
     LENGTH          reduce using rule 20 (expression -> AND expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 20 (expression -> AND expression expression .)
-    NO_ARGUMENTS    reduce using rule 20 (expression -> AND expression expression .)
     END_ARGUMENTS   reduce using rule 20 (expression -> AND expression expression .)
     ARGUMENT_KEYWORD reduce using rule 20 (expression -> AND expression expression .)
 
@@ -6142,6 +6260,8 @@ state 112
     END_FUNCTION    reduce using rule 21 (expression -> OR expression expression .)
     THEN            reduce using rule 21 (expression -> OR expression expression .)
     END_HEADER      reduce using rule 21 (expression -> OR expression expression .)
+    NO_ARGUMENTS    reduce using rule 21 (expression -> OR expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 21 (expression -> OR expression expression .)
     PROMPT          reduce using rule 21 (expression -> OR expression expression .)
     STRING          reduce using rule 21 (expression -> OR expression expression .)
     NUMBER          reduce using rule 21 (expression -> OR expression expression .)
@@ -6171,8 +6291,6 @@ state 112
     RETRIEVE_ELE    reduce using rule 21 (expression -> OR expression expression .)
     CONVERT_TO_ARRAY reduce using rule 21 (expression -> OR expression expression .)
     LENGTH          reduce using rule 21 (expression -> OR expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 21 (expression -> OR expression expression .)
-    NO_ARGUMENTS    reduce using rule 21 (expression -> OR expression expression .)
     END_ARGUMENTS   reduce using rule 21 (expression -> OR expression expression .)
     ARGUMENT_KEYWORD reduce using rule 21 (expression -> OR expression expression .)
 
@@ -6205,6 +6323,8 @@ state 113
     END_FUNCTION    reduce using rule 22 (expression -> XOR expression expression .)
     THEN            reduce using rule 22 (expression -> XOR expression expression .)
     END_HEADER      reduce using rule 22 (expression -> XOR expression expression .)
+    NO_ARGUMENTS    reduce using rule 22 (expression -> XOR expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 22 (expression -> XOR expression expression .)
     PROMPT          reduce using rule 22 (expression -> XOR expression expression .)
     STRING          reduce using rule 22 (expression -> XOR expression expression .)
     NUMBER          reduce using rule 22 (expression -> XOR expression expression .)
@@ -6234,8 +6354,6 @@ state 113
     RETRIEVE_ELE    reduce using rule 22 (expression -> XOR expression expression .)
     CONVERT_TO_ARRAY reduce using rule 22 (expression -> XOR expression expression .)
     LENGTH          reduce using rule 22 (expression -> XOR expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 22 (expression -> XOR expression expression .)
-    NO_ARGUMENTS    reduce using rule 22 (expression -> XOR expression expression .)
     END_ARGUMENTS   reduce using rule 22 (expression -> XOR expression expression .)
     ARGUMENT_KEYWORD reduce using rule 22 (expression -> XOR expression expression .)
 
@@ -6268,6 +6386,8 @@ state 114
     END_FUNCTION    reduce using rule 24 (expression -> EQUALS expression expression .)
     THEN            reduce using rule 24 (expression -> EQUALS expression expression .)
     END_HEADER      reduce using rule 24 (expression -> EQUALS expression expression .)
+    NO_ARGUMENTS    reduce using rule 24 (expression -> EQUALS expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 24 (expression -> EQUALS expression expression .)
     PROMPT          reduce using rule 24 (expression -> EQUALS expression expression .)
     STRING          reduce using rule 24 (expression -> EQUALS expression expression .)
     NUMBER          reduce using rule 24 (expression -> EQUALS expression expression .)
@@ -6297,8 +6417,6 @@ state 114
     RETRIEVE_ELE    reduce using rule 24 (expression -> EQUALS expression expression .)
     CONVERT_TO_ARRAY reduce using rule 24 (expression -> EQUALS expression expression .)
     LENGTH          reduce using rule 24 (expression -> EQUALS expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 24 (expression -> EQUALS expression expression .)
-    NO_ARGUMENTS    reduce using rule 24 (expression -> EQUALS expression expression .)
     END_ARGUMENTS   reduce using rule 24 (expression -> EQUALS expression expression .)
     ARGUMENT_KEYWORD reduce using rule 24 (expression -> EQUALS expression expression .)
 
@@ -6331,6 +6449,8 @@ state 115
     END_FUNCTION    reduce using rule 25 (expression -> GREATER expression expression .)
     THEN            reduce using rule 25 (expression -> GREATER expression expression .)
     END_HEADER      reduce using rule 25 (expression -> GREATER expression expression .)
+    NO_ARGUMENTS    reduce using rule 25 (expression -> GREATER expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 25 (expression -> GREATER expression expression .)
     PROMPT          reduce using rule 25 (expression -> GREATER expression expression .)
     STRING          reduce using rule 25 (expression -> GREATER expression expression .)
     NUMBER          reduce using rule 25 (expression -> GREATER expression expression .)
@@ -6360,8 +6480,6 @@ state 115
     RETRIEVE_ELE    reduce using rule 25 (expression -> GREATER expression expression .)
     CONVERT_TO_ARRAY reduce using rule 25 (expression -> GREATER expression expression .)
     LENGTH          reduce using rule 25 (expression -> GREATER expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 25 (expression -> GREATER expression expression .)
-    NO_ARGUMENTS    reduce using rule 25 (expression -> GREATER expression expression .)
     END_ARGUMENTS   reduce using rule 25 (expression -> GREATER expression expression .)
     ARGUMENT_KEYWORD reduce using rule 25 (expression -> GREATER expression expression .)
 
@@ -6394,6 +6512,8 @@ state 116
     END_FUNCTION    reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     THEN            reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     END_HEADER      reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
+    NO_ARGUMENTS    reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     PROMPT          reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     STRING          reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     NUMBER          reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
@@ -6423,8 +6543,6 @@ state 116
     RETRIEVE_ELE    reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     CONVERT_TO_ARRAY reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     LENGTH          reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
-    NO_ARGUMENTS    reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     END_ARGUMENTS   reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
     ARGUMENT_KEYWORD reduce using rule 26 (expression -> GREATER_OR_EQUAL expression expression .)
 
@@ -6457,6 +6575,8 @@ state 117
     END_FUNCTION    reduce using rule 27 (expression -> LESSER expression expression .)
     THEN            reduce using rule 27 (expression -> LESSER expression expression .)
     END_HEADER      reduce using rule 27 (expression -> LESSER expression expression .)
+    NO_ARGUMENTS    reduce using rule 27 (expression -> LESSER expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 27 (expression -> LESSER expression expression .)
     PROMPT          reduce using rule 27 (expression -> LESSER expression expression .)
     STRING          reduce using rule 27 (expression -> LESSER expression expression .)
     NUMBER          reduce using rule 27 (expression -> LESSER expression expression .)
@@ -6486,8 +6606,6 @@ state 117
     RETRIEVE_ELE    reduce using rule 27 (expression -> LESSER expression expression .)
     CONVERT_TO_ARRAY reduce using rule 27 (expression -> LESSER expression expression .)
     LENGTH          reduce using rule 27 (expression -> LESSER expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 27 (expression -> LESSER expression expression .)
-    NO_ARGUMENTS    reduce using rule 27 (expression -> LESSER expression expression .)
     END_ARGUMENTS   reduce using rule 27 (expression -> LESSER expression expression .)
     ARGUMENT_KEYWORD reduce using rule 27 (expression -> LESSER expression expression .)
 
@@ -6520,6 +6638,8 @@ state 118
     END_FUNCTION    reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     THEN            reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     END_HEADER      reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
+    NO_ARGUMENTS    reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     PROMPT          reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     STRING          reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     NUMBER          reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
@@ -6549,15 +6669,13 @@ state 118
     RETRIEVE_ELE    reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     CONVERT_TO_ARRAY reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     LENGTH          reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
-    NO_ARGUMENTS    reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     END_ARGUMENTS   reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
     ARGUMENT_KEYWORD reduce using rule 28 (expression -> LESSER_OR_EQUAL expression expression .)
 
 
 state 119
 
-    (46) expression -> CALL_FUNCTION ID expression_list . END_ARGUMENTS
+    (46) expression -> CALL_FUNCTION expression expression_list . END_ARGUMENTS
     (51) expression_list -> expression_list . expression
     (5) expression -> . PROMPT expression
     (6) expression -> . STRING
@@ -6583,8 +6701,8 @@ state 119
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -6621,69 +6739,69 @@ state 119
     CONVERT_TO_ARRAY shift and go to state 50
     LENGTH          shift and go to state 51
 
-    expression                     shift and go to state 132
+    expression                     shift and go to state 131
 
 state 120
 
-    (47) expression -> CALL_FUNCTION ID NO_ARGUMENTS .
+    (47) expression -> CALL_FUNCTION expression NO_ARGUMENTS .
 
-    FILE_END        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    PRINT           reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    WHILE           reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DECLARE_FUNCTION reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    RETURN          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    CALL_FUNCTION_STATEMENT reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DECLARE_VAR     reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ASSIGN_VAR      reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    INCREMENT       reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DECREMENT       reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DECLARE_ARR     reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    EDIT_ARR        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ASSIGN_ARR      reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DELETE_ELE      reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    APPEND          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    IF              reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    $end            reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    END             reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    END_LOOP        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ELIF            reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ELSE            reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    END_FUNCTION    reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    THEN            reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    END_HEADER      reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    PROMPT          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    STRING          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    NUMBER          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    CHARACTER       reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    TRUE            reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    FALSE           reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    STRING_TYPE     reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    NUMBER_TYPE     reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    RATIO_TYPE      reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    BOOLEAN_TYPE    reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ID              reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ADD             reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    SUBTRACT        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    MULTIPLY        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    DIVIDE          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    AND             reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    OR              reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    XOR             reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    NOT             reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    EQUALS          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    GREATER         reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    GREATER_OR_EQUAL reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    LESSER          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    LESSER_OR_EQUAL reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    CALL_FUNCTION   reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    CAST_VAR        reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    RETRIEVE_ELE    reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    CONVERT_TO_ARRAY reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    LENGTH          reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    BEGIN_ARGUMENTS reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    NO_ARGUMENTS    reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    END_ARGUMENTS   reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
-    ARGUMENT_KEYWORD reduce using rule 47 (expression -> CALL_FUNCTION ID NO_ARGUMENTS .)
+    FILE_END        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    PRINT           reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    WHILE           reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DECLARE_FUNCTION reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    RETURN          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    CALL_FUNCTION_STATEMENT reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DECLARE_VAR     reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ASSIGN_VAR      reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    INCREMENT       reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DECREMENT       reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DECLARE_ARR     reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    EDIT_ARR        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ASSIGN_ARR      reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DELETE_ELE      reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    APPEND          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    IF              reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    $end            reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    END             reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    END_LOOP        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ELIF            reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ELSE            reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    END_FUNCTION    reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    THEN            reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    END_HEADER      reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    NO_ARGUMENTS    reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    BEGIN_ARGUMENTS reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    PROMPT          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    STRING          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    NUMBER          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    CHARACTER       reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    TRUE            reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    FALSE           reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    STRING_TYPE     reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    NUMBER_TYPE     reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    RATIO_TYPE      reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    BOOLEAN_TYPE    reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ID              reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ADD             reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    SUBTRACT        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    MULTIPLY        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    DIVIDE          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    AND             reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    OR              reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    XOR             reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    NOT             reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    EQUALS          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    GREATER         reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    GREATER_OR_EQUAL reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    LESSER          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    LESSER_OR_EQUAL reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    CALL_FUNCTION   reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    CAST_VAR        reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    RETRIEVE_ELE    reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    CONVERT_TO_ARRAY reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    LENGTH          reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    END_ARGUMENTS   reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
+    ARGUMENT_KEYWORD reduce using rule 47 (expression -> CALL_FUNCTION expression NO_ARGUMENTS .)
 
 
 state 121
@@ -6714,6 +6832,8 @@ state 121
     END_FUNCTION    reduce using rule 56 (expression -> CAST_VAR expression expression .)
     THEN            reduce using rule 56 (expression -> CAST_VAR expression expression .)
     END_HEADER      reduce using rule 56 (expression -> CAST_VAR expression expression .)
+    NO_ARGUMENTS    reduce using rule 56 (expression -> CAST_VAR expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 56 (expression -> CAST_VAR expression expression .)
     PROMPT          reduce using rule 56 (expression -> CAST_VAR expression expression .)
     STRING          reduce using rule 56 (expression -> CAST_VAR expression expression .)
     NUMBER          reduce using rule 56 (expression -> CAST_VAR expression expression .)
@@ -6743,8 +6863,6 @@ state 121
     RETRIEVE_ELE    reduce using rule 56 (expression -> CAST_VAR expression expression .)
     CONVERT_TO_ARRAY reduce using rule 56 (expression -> CAST_VAR expression expression .)
     LENGTH          reduce using rule 56 (expression -> CAST_VAR expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 56 (expression -> CAST_VAR expression expression .)
-    NO_ARGUMENTS    reduce using rule 56 (expression -> CAST_VAR expression expression .)
     END_ARGUMENTS   reduce using rule 56 (expression -> CAST_VAR expression expression .)
     ARGUMENT_KEYWORD reduce using rule 56 (expression -> CAST_VAR expression expression .)
 
@@ -6777,6 +6895,8 @@ state 122
     END_FUNCTION    reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     THEN            reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     END_HEADER      reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
+    NO_ARGUMENTS    reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
+    BEGIN_ARGUMENTS reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     PROMPT          reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     STRING          reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     NUMBER          reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
@@ -6806,8 +6926,6 @@ state 122
     RETRIEVE_ELE    reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     CONVERT_TO_ARRAY reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     LENGTH          reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
-    BEGIN_ARGUMENTS reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
-    NO_ARGUMENTS    reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     END_ARGUMENTS   reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
     ARGUMENT_KEYWORD reduce using rule 62 (expression -> RETRIEVE_ELE expression expression .)
 
@@ -6822,8 +6940,8 @@ state 123
     (33) statement -> . WHILE expression statement_list END_LOOP
     (44) statement -> . DECLARE_FUNCTION func_header statement_list END_FUNCTION
     (45) statement -> . RETURN expression
-    (48) statement -> . CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS
-    (49) statement -> . CALL_FUNCTION_STATEMENT ID NO_ARGUMENTS
+    (48) statement -> . CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
+    (49) statement -> . CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS
     (52) statement -> . DECLARE_VAR expression expression
     (53) statement -> . ASSIGN_VAR expression expression
     (54) statement -> . INCREMENT expression
@@ -7035,34 +7153,6 @@ state 130
 
 state 131
 
-    (48) statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .
-
-    FILE_END        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    PRINT           reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    WHILE           reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    DECLARE_FUNCTION reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    RETURN          reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    CALL_FUNCTION_STATEMENT reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    DECLARE_VAR     reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    ASSIGN_VAR      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    INCREMENT       reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    DECREMENT       reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    DECLARE_ARR     reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    EDIT_ARR        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    ASSIGN_ARR      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    DELETE_ELE      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    APPEND          reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    IF              reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    $end            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    END             reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    END_LOOP        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    ELIF            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    ELSE            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-    END_FUNCTION    reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT ID expression_list END_ARGUMENTS .)
-
-
-state 132
-
     (51) expression_list -> expression_list expression .
 
     END_ARGUMENTS   reduce using rule 51 (expression_list -> expression_list expression .)
@@ -7095,6 +7185,34 @@ state 132
     RETRIEVE_ELE    reduce using rule 51 (expression_list -> expression_list expression .)
     CONVERT_TO_ARRAY reduce using rule 51 (expression_list -> expression_list expression .)
     LENGTH          reduce using rule 51 (expression_list -> expression_list expression .)
+
+
+state 132
+
+    (48) statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .
+
+    FILE_END        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    PRINT           reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    WHILE           reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    DECLARE_FUNCTION reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    RETURN          reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    CALL_FUNCTION_STATEMENT reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    DECLARE_VAR     reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    ASSIGN_VAR      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    INCREMENT       reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    DECREMENT       reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    DECLARE_ARR     reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    EDIT_ARR        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    ASSIGN_ARR      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    DELETE_ELE      reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    APPEND          reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    IF              reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    $end            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    END             reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    END_LOOP        reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    ELIF            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    ELSE            reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
+    END_FUNCTION    reduce using rule 48 (statement -> CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS .)
 
 
 state 133
@@ -7191,65 +7309,65 @@ state 135
 
 state 136
 
-    (46) expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .
+    (46) expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .
 
-    FILE_END        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    PRINT           reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    WHILE           reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DECLARE_FUNCTION reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    RETURN          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    CALL_FUNCTION_STATEMENT reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DECLARE_VAR     reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ASSIGN_VAR      reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    INCREMENT       reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DECREMENT       reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DECLARE_ARR     reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    EDIT_ARR        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ASSIGN_ARR      reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DELETE_ELE      reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    APPEND          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    IF              reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    $end            reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    END             reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    END_LOOP        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ELIF            reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ELSE            reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    END_FUNCTION    reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    THEN            reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    END_HEADER      reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    PROMPT          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    STRING          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    NUMBER          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    CHARACTER       reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    TRUE            reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    FALSE           reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    STRING_TYPE     reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    NUMBER_TYPE     reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    RATIO_TYPE      reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    BOOLEAN_TYPE    reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ID              reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ADD             reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    SUBTRACT        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    MULTIPLY        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    DIVIDE          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    AND             reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    OR              reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    XOR             reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    NOT             reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    EQUALS          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    GREATER         reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    GREATER_OR_EQUAL reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    LESSER          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    LESSER_OR_EQUAL reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    CALL_FUNCTION   reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    CAST_VAR        reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    RETRIEVE_ELE    reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    CONVERT_TO_ARRAY reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    LENGTH          reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    BEGIN_ARGUMENTS reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    NO_ARGUMENTS    reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    END_ARGUMENTS   reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
-    ARGUMENT_KEYWORD reduce using rule 46 (expression -> CALL_FUNCTION ID expression_list END_ARGUMENTS .)
+    FILE_END        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    PRINT           reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    WHILE           reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DECLARE_FUNCTION reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    RETURN          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    CALL_FUNCTION_STATEMENT reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DECLARE_VAR     reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ASSIGN_VAR      reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    INCREMENT       reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DECREMENT       reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DECLARE_ARR     reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    EDIT_ARR        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ASSIGN_ARR      reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DELETE_ELE      reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    APPEND          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    IF              reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    $end            reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    END             reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    END_LOOP        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ELIF            reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ELSE            reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    END_FUNCTION    reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    THEN            reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    END_HEADER      reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    NO_ARGUMENTS    reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    BEGIN_ARGUMENTS reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    PROMPT          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    STRING          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    NUMBER          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    CHARACTER       reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    TRUE            reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    FALSE           reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    STRING_TYPE     reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    NUMBER_TYPE     reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    RATIO_TYPE      reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    BOOLEAN_TYPE    reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ID              reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ADD             reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    SUBTRACT        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    MULTIPLY        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    DIVIDE          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    AND             reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    OR              reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    XOR             reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    NOT             reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    EQUALS          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    GREATER         reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    GREATER_OR_EQUAL reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    LESSER          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    LESSER_OR_EQUAL reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    CALL_FUNCTION   reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    CAST_VAR        reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    RETRIEVE_ELE    reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    CONVERT_TO_ARRAY reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    LENGTH          reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    END_ARGUMENTS   reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
+    ARGUMENT_KEYWORD reduce using rule 46 (expression -> CALL_FUNCTION expression expression_list END_ARGUMENTS .)
 
 
 state 137
@@ -7332,8 +7450,8 @@ state 142
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression
@@ -7408,8 +7526,8 @@ state 144
     (26) expression -> . GREATER_OR_EQUAL expression expression
     (27) expression -> . LESSER expression expression
     (28) expression -> . LESSER_OR_EQUAL expression expression
-    (46) expression -> . CALL_FUNCTION ID expression_list END_ARGUMENTS
-    (47) expression -> . CALL_FUNCTION ID NO_ARGUMENTS
+    (46) expression -> . CALL_FUNCTION expression expression_list END_ARGUMENTS
+    (47) expression -> . CALL_FUNCTION expression NO_ARGUMENTS
     (56) expression -> . CAST_VAR expression expression
     (62) expression -> . RETRIEVE_ELE expression expression
     (63) expression -> . CONVERT_TO_ARRAY expression

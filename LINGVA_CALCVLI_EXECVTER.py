@@ -1,10 +1,19 @@
 from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
 
+#TODO: Refactor variables into new classes
 class VARIABLE():
     def __init__(self,type,value=None):
         self.type = type
         self.value = value
+
+class INTEGER(int):
+    def __str__(self):
+        return num.to_RomNum(self)
+
+class RATIO(float):
+    def __str__(self):
+        return num.to_RomNum(self)
 
 class ARRAY():
     def __init__(self,size,type,elements=[]):
@@ -33,6 +42,8 @@ class FUNCTION():
         self.return_type = return_type
         self.args = args
         self.statements = statements
+    def execute(self,args):
+        pass
 
 class executer():
     def __init__(self) -> None:
@@ -223,7 +234,10 @@ class executer():
             return (0,None)
         
         if statement[0] == "$DECLARE_FUNCTION":
-            pass
+            header = statement[1]
+            statements = statement[2]
+            self.funcs[header[2]] = FUNCTION(header[0],header[2],statements)
+            return (0,None)
    
         if verbose:
             print("executing ", statement)
