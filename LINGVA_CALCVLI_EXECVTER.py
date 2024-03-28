@@ -1,5 +1,6 @@
 from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
+import decimal
 
 #TODO: Refactor variables into new classes
 class VARIABLE():
@@ -7,12 +8,13 @@ class VARIABLE():
         self.type = type
         self.value = value
 
-class INTEGER(int):
+class NUMBER(int):
     def __str__(self):
         return num.to_RomNum(self)
 
 class RATIO(float):
     def __str__(self):
+        print(isinstance(self,float))
         return num.to_RomNum(self)
 
 class ARRAY():
@@ -133,6 +135,12 @@ class executer():
             
         if expr[0] == "@PROMPT":
             return input(self.simplifyExpr(expr[1]))
+        
+        if expr[0] == "@NUMBER":
+            return NUMBER(expr[1])
+        
+        if expr[0] == "@RATIO":
+            return RATIO(expr[1])
         
         if expr[0][0] == "@":
             return expr[1]
@@ -350,6 +358,8 @@ executer = executer()
 
 
 if __name__ == "__main__":
+    r = RATIO(5.54)
+    print(r)
     a = """IMPERO TIBI
 DECLARO COVNTER NVMERVS
 ASSIGNO COVNTER NO. I
@@ -415,7 +425,10 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 DICERE 'SALVE MVNDI'
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
+    e = """IMPERO TIBI
+    DICERE PARS DLIV C
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
 
     #executer.printCode(c)
-    executer.execute(c)
+    executer.execute(e)

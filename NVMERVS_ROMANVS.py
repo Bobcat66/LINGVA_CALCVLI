@@ -1,20 +1,45 @@
 import math
 import fractions
+from decimal import Decimal
 
 def to_RomNum(n: int) -> str:
+    #
     if n == 0:
         return "NVLLA"
+    
     if isinstance(n,float):
-        frac = fractions.Fraction(n)
+        frac = fractions.Fraction(str(float(n)))
         out = "PARS "
         out += to_RomNum(frac.numerator)
         out += " "
         out += to_RomNum(frac.denominator)
         return out
+    
+    outList = []
+    while n > 0:
+        temp = n % 10000
+        if temp > 3999:
+            #3999 is the largest number that can be expressed with normal Roman numerals
+            temp %= 1000
+            outList.append(romnum_inner(temp))
+            n //= 1000
+        else:
+            outList.append(romnum_inner(temp))
+            n -= temp
+            n //= 1000
+
     out = ""
-    for i in range(n // 1000):
-        out += "M"
+    for i in range(len(outList)-1,0,-1):
+        #print(outList[i])
+        out += outList[i]
+        out += "|"
+    out += outList[0]
+    return out
+
+def romnum_inner(n):
+    out = "M"*(n // 1000)
     n %= 1000
+    #Hundreds
     if n >= 900:
         out += "CM"
         n -= 900
@@ -24,9 +49,9 @@ def to_RomNum(n: int) -> str:
     if n >= 400:
         out += "CD"
         n -= 400
-    for i in range(n // 100):
-        out += "C"
+    out += "C" * (n // 100)
     n %= 100
+    #Tens
     if n >= 90:
         out += "XC"
         n -= 90
@@ -36,26 +61,39 @@ def to_RomNum(n: int) -> str:
     if n >= 40:
         out += "XL"
         n -= 40
-    for i in range(n // 10):
-        out += "X"
+    out += "X" * (n // 10)
     n %= 10
+    #Ones
     if n >= 9:
         out += "IX"
         n -= 9
     if n >= 5:
         out += "V"
         n -= 5
-    n %= 5
-    for i in range(n):
-        out += "I"
+    if n >= 4:
+        out += "IV"
+        n -= 4
+    out += "I" * n
     return out
 
 def to_decimal(n: str) -> int:
     if n == "NVLLA":
         return 0
+    
     if n[0:4] == "PARS":
         temp = n.split( )
         return(to_decimal(temp[1])/to_decimal(temp[2]))
+    
+    nList = n.split('|')
+    p = 0
+    out = 0
+    for i in range(len(nList)-1,-1,-1):
+        temp = decimal_inner(nList[i])
+        out += (temp * (1000 ** p))
+        p += 1
+    return out
+
+def decimal_inner(n):
     out = 0
     while len(n) > 1:
         first = n[0]
@@ -119,10 +157,17 @@ def to_decimal(n: str) -> int:
     return out
 
 if __name__ == "__main__":
-    print(to_RomNum(2023))
-    print(to_RomNum(1.5))
-    print(to_decimal("MDCCCXLIX"))
-    print(to_decimal("PARS III II"))
+    print(to_RomNum(4294967295))
+    print(to_RomNum(3999))
+    print(to_RomNum(7999))
+    print(to_RomNum(3999100))
+    print(to_RomNum(103999))
+    print(to_decimal('MMMCMXCIX'))
+    print(to_decimal('MMMM'))
+    print(to_decimal('VI|CCXXXVII|CDLXXXV|CDLXXX|MMMCMVIII|CXXXVII'))
+    print(to_decimal('PARS VI|CCXXXVII|CDLXXXV|CDLXXX|MMMCMVIII|CXXXVII MCXXV|DCCCXCIX|CMVI|DCCCXL|MMDCXXIV'))
+
+
     
 
     

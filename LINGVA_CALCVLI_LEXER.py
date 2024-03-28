@@ -103,13 +103,13 @@ def t_STRING(t):
     return t
 
 def t_NUMBER(t):
-    r'NO[.][ ](?:[IVXLCDM]+|NVLLA)'
+    r'NO[.][ ](?:[IVXLCDM}]+|NVLLA)'
     t.value = NVMERVS_ROMANVS.to_decimal(t.value[4:])
     return t
 
 def t_RATIO(t):
-    r'PARS[ ](?:[IVXLCDM]+|NVLLA)[ ](?:[IVXLCDM]+)'
-    temp = t.value.split( )
+    r'PARS[ ](?:[IVXLCDM|]+|NVLLA)[ ](?:[IVXLCDM|]+)'
+    temp = t.value.split(' ')
     t.value = NVMERVS_ROMANVS.to_decimal(temp[1]) / NVMERVS_ROMANVS.to_decimal(temp[2])
     return t
 
