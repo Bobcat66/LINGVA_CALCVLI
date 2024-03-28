@@ -2,6 +2,8 @@ from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
 
 #TODO: Refactor variables into new classes
+#TODO: Add type hints for better readability
+
 class VARIABLE():
     def __init__(self,type,value=None):
         self.type = type
@@ -94,14 +96,7 @@ class ARRAY():
     def __str__(self):
         return str(self.value)
 
-class FUNCTION():
-    def __init__(self,return_type,args,statements):
-        self.return_type = return_type
-        self.args = args
-        self.statements = statements
-    def execute(self,args):
-        pass
-
+    
 class executer():
     def __init__(self) -> None:
         self.parser = parser
@@ -202,6 +197,17 @@ class executer():
         
         match expr[0]:
 
+            #Misc
+            case "CALL_FUNCTION":
+                funcName = expr[1][1]
+                params = []
+                for rawParam in expr[2]:
+                    #these assign the parameters values
+                    param = self.simplifyExpr(rawParam)
+                    params.append(param)
+                func: FunctionExecuter = self.funcs[funcName]
+                return func.execute(params,verbose=False)
+
             #Arithmetic
             case "ADD":
                 return self.simplifyExpr(expr[1]) + self.simplifyExpr(expr[2])
@@ -296,12 +302,6 @@ class executer():
                             return ret
             return (0,None)
         
-        if statement[0] == "$DECLARE_FUNCTION":
-            header = statement[1]
-            statements = statement[2]
-            self.funcs[header[2]] = FUNCTION(header[0],header[2],statements)
-            return (0,None)
-   
         if verbose:
             print("executing ", statement)
 
@@ -381,6 +381,27 @@ class executer():
                 newVal = self.simplifyExpr(statement[2])
 
                 self.memory[arrayName] = self.memory[arrayName].append(newVal)
+            
+            case "$DECLARE_FUNCTION":
+                header = statement[1]
+                statements = statement[2]
+                parameters = []
+                for rawParam in header[2]:
+                    #These declare the parameters
+                    param = (self.simplifyExpr(rawParam[0]),self.simplifyExpr(rawParam[1]))
+                    parameters.append(param)
+                self.funcs[header[1][1]] = FunctionExecuter(parameters=parameters,statements=statements,returnType=self.simplifyExpr(header[0]))
+
+            case "$CALL_FUNCTION":
+                funcName = statement[1][1]
+                params = []
+                for rawParam in statement[2]:
+                    #these assign the parameters values
+                    param = self.simplifyExpr(param)
+                    params.append(param)
+                func: FunctionExecuter = self.funcs[funcName]
+                return func.execute_as_statement(params,verbose=verbose)
+
         return (0,None)
     
     def execute(self,code,verbose=False):
@@ -406,7 +427,90 @@ EXECUTER RETURN CODES
 0: successful execution
 1: type error
 2: syntax error
+3: return value (ONLY FOR FUNCTION EXECUTION)
 """
+class FunctionExecuter(executer):
+    #A class representing a function
+    #All inputs must already be processed. although FunctionExecuter has a simplifyexpr method, it is only to be used during the execution of the function itself
+    def __init__(self,parameters,statements,returnType):
+        self.returnType = returnType
+        self.statements = statements
+        self.memory = {}
+        self.parameters = parameters # This is a list of the names of the parameters, and their order (the values are stored in memory)
+        #params must be tuples of the form (<parameter name>,<parameter type>). preprocessing (simplify expr) should be done beforehand
+        for param in parameters:
+            self.memory[param[0]] = VARIABLE(param[1])
+        self.funcs = {}
+    
+    def resetMemory(self):
+        #resets memory to default
+        self.memory = {}
+        for param in self.parameters:
+            self.memory[param[0]] = VARIABLE(param[1])
+
+    def verifyType(self, type, value):
+        return super().verifyType(type, value)
+
+    def simplifyExpr(self, expr):
+        return super().simplifyExpr(expr)
+    
+
+    def executeStatement(self, statement, verbose=False):
+        if statement[0] == "$RETURN":
+            val = self.simplifyExpr(statement[1])
+            if self.verifyType(self.returnType,val):
+                return (3,self.simplifyExpr(statement[1]))
+            else:
+                return (1,"return value of '{0}' must be of type '{1}'".format(val,self.returnType))
+        else:
+            return super().executeStatement(statement, verbose)
+    
+    def execute(self,args,verbose=False):
+        #Args must be raw data. preprocessing should be done beforehand
+        for i in range(len(args)):
+            self.memory[self.parameters[i][0]] = VARIABLE(self.parameters[i][1],args[i])
+        
+        for statement in self.statements:
+            ret = self.executeStatement(statement,verbose=verbose)
+            match ret[0]:
+                case 0:
+                    pass
+                case 1:
+                    print("FUNCTION RETURN CODE 1 TYPE ERROR: " + ret[1])
+                    self.resetMemory()
+                    return None
+                case 2:
+                    print("FUNCTION RETURN CODE 2 SYNTAX ERROR: " + ret[1])
+                    self.resetMemory()
+                    return None
+                case 3:
+                    #(<execution code>,<return value>)
+                    self.resetMemory()
+                    return ret
+                case _:
+                    print("FUNCTION UNKNOWN ERROR: " + ret[1])
+                    self.resetMemory()
+                    return None
+        self.resetMemory()
+        print("FUNCTION RETURN CODE 2 SYNTAX ERROR: FUNCTION MUST RETURN VALUE")
+        return None
+
+    def execute_as_statement(self,args: list,verbose: bool) -> tuple:
+         #Args must be processed data. preprocessing should be done beforehand
+        for i in range(len(args)):
+            self.memory[self.parameters[i][0]] = VARIABLE(self.parameters[i][1],args[i])
+
+        for statement in self.statements:
+            ret = self.executeStatement(statement,verbose=verbose)
+            match ret[0]:
+                case 0:
+                    pass
+                case 3:
+                    #(<execution code>,<return value>)
+                    pass
+                case _:
+                    return ret
+        return (0,None)
 
             
 executer = executer()
