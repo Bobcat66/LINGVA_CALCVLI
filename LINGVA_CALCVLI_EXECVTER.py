@@ -1,6 +1,5 @@
 from LINGVA_CALCVLI_PARSER import parser
 import NVMERVS_ROMANVS as num
-import decimal
 
 #TODO: Refactor variables into new classes
 class VARIABLE():
@@ -11,11 +10,67 @@ class VARIABLE():
 class NUMBER(int):
     def __str__(self):
         return num.to_RomNum(self)
-
+    
+    def __add__(self,other):
+        if not isinstance(other,(NUMBER)):
+            return NotImplemented
+        return NUMBER(super().__add__(other))
+    
+    def __sub__(self,other):
+        if not isinstance(other,(NUMBER)):
+            return NotImplemented
+        return NUMBER(super().__sub__(other))
+    
+    def __mul__(self,other):
+        if not isinstance(other,(NUMBER)):
+            return NotImplemented
+        return NUMBER(super().__mul__(other))
+    
+    def __div__(self,other):
+        if not isinstance(other,(NUMBER)):
+            return NotImplemented
+        return RATIO(super().__div__(other))
+    
 class RATIO(float):
     def __str__(self):
-        print(isinstance(self,float))
         return num.to_RomNum(self)
+    
+    def __add__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__add__(other))
+    def __radd__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__add__(other))
+    
+    def __sub__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__sub__(other))
+    def __rsub__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__rsub__(other))
+    
+    def __mul__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__mul__(other))
+    def __rmul__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__mul__(other))
+    
+    def __div__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__div__(other))
+    def __rdiv__(self,other):
+        if not isinstance(other,(RATIO,NUMBER)):
+            return NotImplemented
+        return RATIO(super().__rdiv__(other))
+
 
 class ARRAY():
     def __init__(self,size,type,elements=[]):
@@ -277,13 +332,13 @@ class executer():
                 if not self.verifyType("NUMBER",self.simplifyExpr(statement[1])):
                     #WIP
                     return (1,statement)
-                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value + 1
+                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value + NUMBER(1)
 
             case "$DECREMENT":
                 if not self.verifyType("NUMBER",self.simplifyExpr(statement[1])):
                     #WIP
                     return (1,statement)
-                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value - 1
+                self.memory[statement[1][1]].value = self.memory[statement[1][1]].value - NUMBER(1)
 
             case "$DECLARE_ARR":
                 arrayName = statement[1][1]
@@ -358,8 +413,6 @@ executer = executer()
 
 
 if __name__ == "__main__":
-    r = RATIO(5.54)
-    print(r)
     a = """IMPERO TIBI
 DECLARO COVNTER NVMERVS
 ASSIGNO COVNTER NO. I
@@ -427,6 +480,8 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
 """
     e = """IMPERO TIBI
     DICERE PARS DLIV C
+    DICERE SVMMA SVMMA NO. M|||| NO. MMMM NO. MCM||
+    DICERE SVMMA NO. I PARS I I
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
 

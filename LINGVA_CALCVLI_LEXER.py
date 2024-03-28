@@ -103,7 +103,7 @@ def t_STRING(t):
     return t
 
 def t_NUMBER(t):
-    r'NO[.][ ](?:[IVXLCDM}]+|NVLLA)'
+    r'NO[.][ ](?:[IVXLCDM|]+|NVLLA)'
     t.value = NVMERVS_ROMANVS.to_decimal(t.value[4:])
     return t
 

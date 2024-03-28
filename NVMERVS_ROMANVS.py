@@ -8,7 +8,7 @@ def to_RomNum(n: int) -> str:
         return "NVLLA"
     
     if isinstance(n,float):
-        frac = fractions.Fraction(str(float(n)))
+        frac = fractions.Fraction(repr(n)) #Because RATIO's __str__() function calles to_RomNum on itself, calling repr() on n is necessary to prevent an infinite recursion
         out = "PARS "
         out += to_RomNum(frac.numerator)
         out += " "
@@ -30,7 +30,6 @@ def to_RomNum(n: int) -> str:
 
     out = ""
     for i in range(len(outList)-1,0,-1):
-        #print(outList[i])
         out += outList[i]
         out += "|"
     out += outList[0]
@@ -157,15 +156,7 @@ def decimal_inner(n):
     return out
 
 if __name__ == "__main__":
-    print(to_RomNum(4294967295))
-    print(to_RomNum(3999))
-    print(to_RomNum(7999))
-    print(to_RomNum(3999100))
-    print(to_RomNum(103999))
-    print(to_decimal('MMMCMXCIX'))
-    print(to_decimal('MMMM'))
-    print(to_decimal('VI|CCXXXVII|CDLXXXV|CDLXXX|MMMCMVIII|CXXXVII'))
-    print(to_decimal('PARS VI|CCXXXVII|CDLXXXV|CDLXXX|MMMCMVIII|CXXXVII MCXXV|DCCCXCIX|CMVI|DCCCXL|MMDCXXIV'))
+    print(to_RomNum(5000000000000))
 
 
     
