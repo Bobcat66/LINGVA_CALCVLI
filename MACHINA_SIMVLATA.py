@@ -2,6 +2,7 @@
 
 variables = [] #list of variables
 array = [] #list of arrays
+funcs = [] #list of functions
 call_stack = []
 expression_stack = []
 
