@@ -386,10 +386,13 @@ class executer():
                 header = statement[1]
                 statements = statement[2]
                 parameters = []
-                for rawParam in header[2]:
-                    #These declare the parameters
-                    param = (self.simplifyExpr(rawParam[0]),self.simplifyExpr(rawParam[1]))
-                    parameters.append(param)
+                if header[2] is not None:
+                    for rawParam in header[2]:
+                        #These declare the parameters
+                        param = (rawParam[0][1],self.simplifyExpr(rawParam[1]))
+                        parameters.append(param)
+                else:
+                    parameters = None
                 self.funcs[header[1][1]] = FunctionExecuter(parameters=parameters,statements=statements,returnType=self.simplifyExpr(header[0]))
 
             case "$CALL_FUNCTION":
@@ -397,7 +400,7 @@ class executer():
                 params = []
                 for rawParam in statement[2]:
                     #these assign the parameters values
-                    param = self.simplifyExpr(param)
+                    param = self.simplifyExpr(rawParam)
                     params.append(param)
                 func: FunctionExecuter = self.funcs[funcName]
                 return func.execute_as_statement(params,verbose=verbose)
@@ -438,15 +441,17 @@ class FunctionExecuter(executer):
         self.memory = {}
         self.parameters = parameters # This is a list of the names of the parameters, and their order (the values are stored in memory)
         #params must be tuples of the form (<parameter name>,<parameter type>). preprocessing (simplify expr) should be done beforehand
-        for param in parameters:
-            self.memory[param[0]] = VARIABLE(param[1])
+        if parameters is not None:
+            for param in parameters:
+                self.memory[param[0]] = VARIABLE(param[1])
         self.funcs = {}
     
     def resetMemory(self):
         #resets memory to default
         self.memory = {}
-        for param in self.parameters:
-            self.memory[param[0]] = VARIABLE(param[1])
+        if self.parameters is not None:
+            for param in self.parameters:
+                self.memory[param[0]] = VARIABLE(param[1])
 
     def verifyType(self, type, value):
         return super().verifyType(type, value)
@@ -497,8 +502,9 @@ class FunctionExecuter(executer):
 
     def execute_as_statement(self,args: list,verbose: bool) -> tuple:
          #Args must be processed data. preprocessing should be done beforehand
-        for i in range(len(args)):
-            self.memory[self.parameters[i][0]] = VARIABLE(self.parameters[i][1],args[i])
+        if self.parameters is not None:
+            for i in range(len(args)):
+                self.memory[self.parameters[i][0]] = VARIABLE(self.parameters[i][1],args[i])
 
         for statement in self.statements:
             ret = self.executeStatement(statement,verbose=verbose)
@@ -588,6 +594,22 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
     DICERE SVMMA NO. I PARS I I
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
 
+    f = """IMPERO TIBI
+    DECLARARE_FVNCTIO INITIVM_TITVLI SCRIPTVM FVNC_ONE NVLLVM_ARGVMENTVM FINIS_TITVLI
+        DICERE 'HELLO WORLD'
+        FINIS
+    FINIS_FVNCTIO
+    VOCATERE_SICVT_IMPERIVM FVNC_ONE NVLLVM_ARGVMENTVM
+    CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
+
+    g = """IMPERO TIBI
+    DECLARARE_FVNCTIO INITIVM_TITVLI SCRIPTVM FVNC_ONE INITIVM_ARGVMENTORVM ARGVMENTVM STRING SCRIPTVM FINIS_ARGVMENTORVM FINIS_TITVLI
+        DICERE STRING
+        FINIS
+    FINIS_FVNCTIO
+    VOCATERE_SICVT_IMPERIVM FVNC_ONE INITIVM_ARGVMENTORVM 'HALLO VOROLD' FINIS_ARGVMENTORVM
+    CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
+
 
     #executer.printCode(c)
-    executer.execute(e)
+    executer.execute(g)
