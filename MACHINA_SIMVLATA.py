@@ -31,7 +31,8 @@ class stack_machine():
         'IFEQ' : 0x0d, 
         'IFNE' : 0x0e,
         'WINC' : 0x0f,
-        'NOP' : 0x10
+        'NOP' : 0x10,
+        'STORE' : 0x11
     }
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
     def __init__(self):
@@ -59,6 +60,25 @@ class stack_machine():
         arg2 = self.getFwd(offset+2)
         return ((arg1 << 8) | arg2) #converts two bytes into unsigned 16 bit integer
     
+    def decompileOpcode(self,opcode):
+        #Decompiles individual opcode
+        key_list = list(self.command_dict.keys())
+        val_list = list(self.command_dict.values())
+        index = val_list.index(opcode)
+        return key_list[index]
+    
+    def formatInstructions(self,showPointer=False):
+        #formats instructions into string
+        instructions = ['0x%02x' % ele for ele in self.ops]
+        iStr = '['
+        for i in range(len(instructions)):
+            if showPointer and i == self.pointer:
+                iStr += '<<{0}>>, '.format(instructions[i])
+            else:
+                iStr += instructions[i] + ', '
+        iStr = iStr[:-2]
+        iStr += ']'
+        return iStr
     def op(self,opcode):
         #Executes a single opcode
         match opcode:
@@ -179,6 +199,14 @@ class stack_machine():
                 #NOP
                 #No operation
                 return 1
+            case 0x11:
+                #STORE
+                #Pops top element of stack, and stores it at index in memory
+                #Takes one one-byte parameter, the variable index
+                arg1 = self.getFwd(1)
+                a = self.stack.pop()
+                self.memory[arg1] = a
+                return 1 + 1
                 
     def initializeMemory(self,vars):
         self.memory = vars
@@ -190,14 +218,17 @@ class stack_machine():
         if verbose:
             while self.pointer < len(code):
                 opcode = self.ops[self.pointer]
-                key_list = list(self.command_dict.keys())
-                val_list = list(self.command_dict.values())
-                index = val_list.index(opcode)
-                print("Pointer at:",self.pointer)
-                print(self.stack)
-                print("Executing " + key_list[index])
+                print("Stack:",self.stack)
+                print("Memory:",self.memory)
+                print("Instructions:",self.formatInstructions(showPointer=True))
+                print("Pointer:",self.pointer)
+                print("Executing {0} ({1})".format('0x%02x' % opcode,self.decompileOpcode(opcode)))
+                print("------------------------------------------------------------")
                 a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward
                 self.pointer += a
+            print("Stack:",self.stack)
+            print("Memory:",self.memory)
+            print("Instructions:",self.formatInstructions())
                 
         else:
             while self.pointer < len(code):
@@ -221,6 +252,9 @@ class stack_machine():
             precode = [x for x in precode if len(x) > 0]
         code = [int(x) if x.isnumeric() else self.command_dict[x] for x in precode]
         return (vars,code)
+    
+    def __repr__(self):
+        return "stack_machine(\n    stack={0},\n    memory={1},\n    ops={2},\n    pointer={3}\n)".format(self.stack,self.memory,self.formatInstructions(),self.pointer)
 
     def push(self,val):
         self.stack.append(val)
@@ -250,27 +284,35 @@ exp = stack_machine()
 a = '''
 5 13 11
 #### BEGIN CODE ####
-LOAD
-1
-LOAD
-0
-IFEQ
-0
-14
-LOAD 
-2
+LOAD 1
+LOAD 0
+IFEQ 0,14
+LOAD 2
 ADD
-WINC
-0
-0
-255
-255
-GOTO
-255
-243
+WINC 0,0 255,255
+GOTO 255,243
 NOP
 '''
-b = exp.compile(a)
+fibonacci = '''
+0 1 20
+#### BEGIN CODE ####
+LOAD 2
+IFEQ 0 24
+LOAD 0
+LOAD 0
+LOAD 1
+LOAD 1
+STORE 0
+ADD
+STORE 1
+WINC 0 2 255 255
+GOTO 255 233
+LOAD 0
+LOAD 1
+'''
+b = exp.compile(fibonacci)
 print(b)
 exp.initializeMemory(b[0])
-exp.execute(b[1], verbose=True)
+exp.execute(b[1],verbose=True)
+#print(repr(exp))
+
