@@ -74,10 +74,10 @@ class stack_machine():
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
     def __init__(self):
         self.stack = [] # operation stack, each entry is 4 bytes wide
-        self.memory = [] # local variables, each element is 4 bytes long, and is natively stored as an int
+        self.memory = [] # local variables, each element is 4 bytes wide, and is natively stored as an int
         self.ops = [] # list of instructions to be executed
         self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address 
-        self.heap = [] #Stores large data structures, like strings and arrays
+        self.heap = [] #Stores large data structures, like strings and arrays. each element of a heap is 4 bytes wide
         self.pointer = 0 # instruction pointer
     
     def getFwd(self,offset):
@@ -128,6 +128,7 @@ class stack_machine():
         iStr = iStr[:-2]
         iStr += ']'
         return iStr
+    
     def op(self,opcode):
         #Executes a single opcode
         match opcode:
@@ -416,7 +417,7 @@ class stack_machine():
         # Sections of the code are separated by '#### #### #### ####'
         # Heap setup goes first, then symbols, then Local memory, then code.
         # Heap elements should be series of numerical bytes separated by spaces
-        # Symbols should be tuples of the following format: <info byte> <3-byte address>
+        # Symbols should be tuples of the following format: <info byte> <4-byte address>
         # Variables should be separated by spaces
         # Compiler only supports simple numerical variables right now
         # Safe catches errors, but slows down compilation
@@ -470,81 +471,87 @@ class stack_machine():
         b = self.stack.pop()
         self.stack.append(b/a)
 
-exp = stack_machine()
+def pack(codeTuple,fileName):
+    # codeTuple should be a 4-tuple formatted in the following way:
+    # (<heap>,<symbols>,<vars>,<code>)
+    heap = codeTuple[0]
+    symbols = codeTuple[1]
+    vars = codeTuple[2]
+    code = codeTuple[3]
+    heapsize = len(heap)
+    symbolsize = len(symbols)
+    varsize = len(vars)
+    codesize = len(code)
+    beginLst = []
+    for byte in intToBytes(heapsize):
+        beginLst.append(byte)
+    for byte in intToBytes(symbolsize):
+        beginLst.append(byte)
+    for byte in intToBytes(varsize):
+        beginLst.append(byte)
+    for byte in intToBytes(codesize):
+        beginLst.append(byte)
+    heapLst = []
+    for ele in heap:
+        for byte in intToBytes(len(ele)):
+            heapLst.append(byte)
+        for ele1 in ele:
+            for byte in intToBytes(ele1):
+                heapLst.append(byte)
+    symbolLst = []
+    for ele in symbols:
+        heapLst.append(ele[0])
+        for byte in intToBytes(ele[1]):
+            symbolLst.append(byte)
+    varLst = []
+    for ele in vars:
+        for byte in intToBytes(ele):
+            varLst.append(byte)
+    cLst = []
+    for ele in code:
+        cLst.append(ele)
+    finLst = beginLst
+    finLst += heapLst
+    finLst += symbolLst
+    finLst += varLst
+    finLst += cLst
+    outBytes = bytes(finLst)
+    i = 0
+    print(outBytes)
+    for ele in outBytes:
+        if i % 16 == 0:
+            print('\n',end="")
+        print('{0:02x} '.format(ele), end="")
+        i += 1
+    f = open(fileName, 'wb')
+    f.write(outBytes)
 
-a = '''
-#### #### #### ####
-#### #### #### ####
-5 13 11
-#### #### #### ####
-LOAD 1
-LOAD 0
-IFEQ 0,14
-LOAD 2
-ADD
-WINC 0,0 255,255
-GOTO 255,243
-NOP
-'''
-fibonacci = '''
-#### #### #### ####
-#### #### #### ####
-0 1 20
-#### #### #### ####
-LOAD 2
-IFEQ 0 24
-LOAD 0
-LOAD 0
-LOAD 1
-LOAD 1
-STORE 0
-ADD
-STORE 1
-WINC 0 2 255 255
-GOTO 255 233
-LOAD 0
-LOAD 1
-'''
-fibonacci2 = '''
-#### #### #### ####
-#### #### #### ####
-0 1 5
-#### #### #### ####
-LOAD 2
-IFEQ 0 22
-LOAD 0
-DUP
-LOAD 1
-DUP
-STORE 0
-ADD
-STORE 1
-WINC 0 2 255 255
-GOTO 255 235
-LOAD 0
-LOAD 1
-'''
-helloWorld = '''
-72 101 108 108 111 44 32 119 111 114 108 100 10
-#### #### #### ####
-STRING 0
-#### #### #### ####
-0 0
-#### #### #### ####
-LREF 0
-ARRLEN
-STORE 0
-LOAD 0
-LOAD 1
-IFCEQ 0 15
-LREF 0
-LOAD 1
-LARR
-IPRINT
-INC 1 1
-GOTO 255 240
-'''
-helloWorld2 = '''
+
+def intToBytes(num):
+    if num < 0:
+        num += (1 << 32) 
+    b1 = num >> 24
+    b2 = (num % (1 << 24)) >> 16
+    b3 = (num % (1 << 16)) >> 8
+    b4 = num % (1 << 8)
+    return (b1,b2,b3,b4)
+
+def bytesToInt(b1,b2,b3,b4):
+    b1 = b1 << 24
+    b2 = b2 << 16
+    b3 = b3 << 8
+    num = b1|b2|b3|b4
+    if (num & (1 << 31)):
+        num -= (1 << 32)
+    return num
+    
+
+if __name__ == '__main__':
+    #for testing
+    print(intToBytes(-4443))
+    print(bytesToInt(255,255,238,165))
+    exe = stack_machine()
+    c = '''
 72 101 108 108 111 44 32 119 111 114 108 100 10
 83 101 99 111 110 100 32 115 116 114 105 110 103
 #### #### #### ####
@@ -580,9 +587,7 @@ IPRINT
 INC 1 1
 GOTO 255 240
 '''
-b = exp.compile(helloWorld)
-#print(b)
-exp.initialize(b[0],b[1],b[2])
-exp.execute(b[3],verbose=False)
-#print(repr(exp))
+    cc = exe.compile(c)
+    pack(cc,fileName="helloWorld.mcs")
+
 

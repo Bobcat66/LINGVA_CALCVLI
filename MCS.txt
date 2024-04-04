@@ -1,0 +1,107 @@
+first
+#### #### #### ####
+#### #### #### ####
+5 13 11
+#### #### #### ####
+LOAD 1
+LOAD 0
+IFEQ 0,14
+LOAD 2
+ADD
+WINC 0,0 255,255
+GOTO 255,243
+NOP
+
+fibonacci
+#### #### #### ####
+#### #### #### ####
+0 1 20
+#### #### #### ####
+LOAD 2
+IFEQ 0 24
+LOAD 0
+LOAD 0
+LOAD 1
+LOAD 1
+STORE 0
+ADD
+STORE 1
+WINC 0 2 255 255
+GOTO 255 233
+LOAD 0
+LOAD 1
+
+fibonacci2
+#### #### #### ####
+#### #### #### ####
+0 1 5
+#### #### #### ####
+LOAD 2
+IFEQ 0 22
+LOAD 0
+DUP
+LOAD 1
+DUP
+STORE 0
+ADD
+STORE 1
+WINC 0 2 255 255
+GOTO 255 235
+LOAD 0
+LOAD 1
+
+helloWorld
+72 101 108 108 111 44 32 119 111 114 108 100 10
+#### #### #### ####
+STRING 0
+#### #### #### ####
+0 0
+#### #### #### ####
+LREF 0
+ARRLEN
+STORE 0
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 0
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
+
+helloWorld2
+72 101 108 108 111 44 32 119 111 114 108 100 10
+83 101 99 111 110 100 32 115 116 114 105 110 103
+#### #### #### ####
+STRING 0
+STRING 1
+#### #### #### ####
+0 0
+#### #### #### ####
+LREF 0
+ARRLEN
+STORE 0
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 0
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
+LREF 1
+ARRLEN
+STORE 0
+PUSH 0
+STORE 1
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 1
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
