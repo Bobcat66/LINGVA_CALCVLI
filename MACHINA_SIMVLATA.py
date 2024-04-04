@@ -40,7 +40,7 @@ class stack_machine():
         'IFCLS' : 0x15, #Lesser
         'IFCGE' : 0x16, #Greater_or_Equal
         'IFCLE' : 0x17, #Lesser_or_Equal
-        'IPRINT' : 0x18, #Prints top element of stack
+        'CPRINT' : 0x18, #Prints top element of stack
         'DUP' : 0x19, #Duplicates last element of stack
         'DUP2' : 0x1a, #Duplicates last element of stack twice
         'LREF' : 0x1b, #Load ref from Symbol table
