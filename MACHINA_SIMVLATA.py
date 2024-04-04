@@ -76,8 +76,8 @@ class stack_machine():
         self.stack = [] # operation stack, each entry is 4 bytes wide
         self.memory = [] # local variables, each element is 4 bytes wide, and is natively stored as an int
         self.ops = [] # list of instructions to be executed
-        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address 
-        self.heap = [] #Stores large data structures, like strings and arrays. each element of a heap is 4 bytes wide
+        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address or value (NOTE: SYMBOL VALUES ARE SIGNED)
+        self.heap = [] #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
         self.pointer = 0 # instruction pointer
     
     def getFwd(self,offset):
@@ -99,16 +99,6 @@ class stack_machine():
         arg2 = self.getFwd(offset+2)
         return ((arg1 << 8) | arg2) #converts two bytes into unsigned 16 bit integer
     
-    def toInt32(b1,b2,b3,b4):
-        #Converts 4 bytes to int32
-        b1 = b1 << 24
-        b2 = b2 << 16
-        b3 = b3 << 8
-        a = b1 | b2 | b3 | b4
-        if a & (1 << 31):
-            a -= (1 << 32)
-        return a
-    
     def decompileOpcode(self,opcode):
         #Decompiles individual opcode
         key_list = list(self.command_dict.keys())
@@ -118,7 +108,7 @@ class stack_machine():
     
     def formatInstructions(self,showPointer=False):
         #formats instructions into string
-        instructions = ['0x%02x' % ele for ele in self.ops]
+        instructions = ['%02x' % ele for ele in self.ops]
         iStr = '['
         for i in range(len(instructions)):
             if showPointer and i == self.pointer:
@@ -365,7 +355,7 @@ class stack_machine():
                 #Load element of array
                 index = self.stack.pop()
                 arrayref = self.stack.pop()
-                self.stack.append(self.heap[arrayref][index])
+                self.stack.append(self.heap[arrayref][2][index])
                 return 1
             case 0x1e:
                 #STARR
@@ -373,13 +363,13 @@ class stack_machine():
                 value = self.stack.pop()
                 index = self.stack.pop()
                 arrayref = self.stack.pop()
-                self.heap[arrayref][index] = value
+                self.heap[arrayref][2][index] = value
                 return 1
             case 0x1f:
                 #ARRLEN
                 #Get array length
                 arrayref = self.stack.pop()
-                self.stack.append(len(self.heap[arrayref]))
+                self.stack.append(len(self.heap[arrayref][2]))
                 return 1
                 
     def initialize(self,heap,symbols,vars):
@@ -398,7 +388,7 @@ class stack_machine():
                 print("Memory:",self.memory)
                 print("Instructions:",self.formatInstructions(showPointer=True))
                 print("Pointer:",self.pointer)
-                print("Executing {0} ({1})".format('0x%02x' % opcode,self.decompileOpcode(opcode)))
+                print("Executing {0} ({1})".format('%02x' % opcode,self.decompileOpcode(opcode)))
                 print("------------------------------------------------------------")
                 a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward
                 self.pointer += a
@@ -421,28 +411,48 @@ class stack_machine():
         # Variables should be separated by spaces
         # Compiler only supports simple numerical variables right now
         # Safe catches errors, but slows down compilation
+        # All numbers should be in hexadecimal, and should be broken up into bytes of exactly two digits
         textTup = textCode.split('#### #### #### ####')
+
         preheap = textTup[0].strip().split('\n')
         heap = []
         for ele in preheap:
-            byteArray = [int(x) for x in ele.split()]
-            heap.append(byteArray)
+            preObj = ele.split()
+            width = int(preObj[0],base=16) #size of each element in bits
+            byteWidth = width//8
+            signed = bool(preObj[1])
+            obj = (width,signed,[])
+            byteArray = [int(x,base=16) for x in ele.split()[2:]]
+            for i in range(len(byteArray)//byteWidth):
+                bytes = []
+                for j in range(byteWidth):
+                    bytes.append(byteArray[(byteWidth*i)+j])
+                obj[2].append(bytesToInt(*bytes,width=width,signed=signed))
+            heap.append(obj)
+
         preSymbols = textTup[1].strip().split('\n')
         symbols = []
-        for iele in preSymbols:
-            ele = iele.split()
-            if not ele[0].isnumeric():
-                symbol = (self.ref_dict[ele[0]],int(ele[1]))
+        for sele in preSymbols:
+            ele = sele.split()
+            bele1 = [int(x,16) for x in ele[1:]]
+            if not len(ele[0]) == 2:
+                symbol = (self.ref_dict[ele[0]],bytesToInt(*bele1,signed=True))
             else:
-                symbol = (int(ele[0]),int(ele[1]))
+                symbol = (int(ele[0],base=16),bytesToInt(*bele1,signed=True))
             symbols.append(symbol)
-        prevars = textTup[2].strip().split()
-        vars = [int(var) for var in prevars]
+
+        prevars = textTup[2].strip().split('\n')
+        #vars = [int(var) for var in prevars]
+        vars = []
+        for ele in prevars:
+            ele1 = [int(x,16) for x in ele.split()]
+            vars.append(bytesToInt(*ele1,signed=True))
+
         preText = textTup[3].strip()
         precode = re.split('[ ,\n]',preText)
         if safe:
             precode = [x for x in precode if len(x) > 0]
-        code = [int(x) if x.isnumeric() else self.command_dict[x] for x in precode]
+        code = [int(x,base=16) if len(x) == 2 else self.command_dict[x] for x in precode]
         return (heap,symbols,vars,code)
     
     def __repr__(self):
@@ -471,7 +481,10 @@ class stack_machine():
         b = self.stack.pop()
         self.stack.append(b/a)
 
-def pack(codeTuple,fileName):
+def pack(codeTuple):
+    '''
+    packs codetuple into byte array that can be written to a .mcs file
+    '''
     # codeTuple should be a 4-tuple formatted in the following way:
     # (<heap>,<symbols>,<vars>,<code>)
     heap = codeTuple[0]
@@ -483,26 +496,28 @@ def pack(codeTuple,fileName):
     varsize = len(vars)
     codesize = len(code)
     beginLst = []
-    for byte in intToBytes(heapsize):
-        beginLst.append(byte)
-    for byte in intToBytes(symbolsize):
-        beginLst.append(byte)
-    for byte in intToBytes(varsize):
-        beginLst.append(byte)
-    for byte in intToBytes(codesize):
-        beginLst.append(byte)
+    beginLst += list(intToBytes(heapsize))
+    beginLst += list(intToBytes(symbolsize))
+    beginLst += list(intToBytes(varsize))
+    beginLst += list(intToBytes(codesize))
+
     heapLst = []
-    for ele in heap:
-        for byte in intToBytes(len(ele)):
-            heapLst.append(byte)
-        for ele1 in ele:
-            for byte in intToBytes(ele1):
-                heapLst.append(byte)
+    for obj in heap:
+        width = obj[0]
+        signed = obj[1]
+        heapLst += list(intToBytes(len(obj[2])))
+        heapLst.append(width)
+        heapLst.append(signed)
+        for ele in obj[2]:
+            tempbytes = list(intToBytes(ele,size=width))
+            heapLst += tempbytes
+
     symbolLst = []
     for ele in symbols:
-        heapLst.append(ele[0])
+        symbolLst.append(ele[0])
         for byte in intToBytes(ele[1]):
             symbolLst.append(byte)
+
     varLst = []
     for ele in vars:
         for byte in intToBytes(ele):
@@ -516,78 +531,137 @@ def pack(codeTuple,fileName):
     finLst += varLst
     finLst += cLst
     outBytes = bytes(finLst)
-    i = 0
-    print(outBytes)
-    for ele in outBytes:
-        if i % 16 == 0:
-            print('\n',end="")
-        print('{0:02x} '.format(ele), end="")
-        i += 1
-    f = open(fileName, 'wb')
-    f.write(outBytes)
+    return outBytes
 
 
-def intToBytes(num):
+def unpack(bytecode):
+    '''
+    Unpacks raw bytes from .mcs file to useable code tuple
+    '''
+    heapLen = int.from_bytes(bytecode[0:4],'big',signed=False)
+    symbolLen = int.from_bytes(bytecode[4:8],'big',signed=False)
+    varLen = int.from_bytes(bytecode[8:12],'big',signed=False)
+    codeLen = int.from_bytes(bytecode[12:16],'big',signed=False)
+
+    heap = []
+    p = 16 # pointer byte being analyzed
+    for i in range(heapLen):
+        objLen = int.from_bytes(bytecode[p:p+4],'big',signed=False)
+        p += 4
+        width = int(bytecode[p]) #Width in bits
+        byteWidth = width//8 #Width in bytes
+        p += 1
+        signed = bool(bytecode[p])
+        p += 1
+        objSize = byteWidth * objLen #Size of object in memory, in bytes
+
+        objBytes = bytecode[p:p+objSize]
+        objList = []
+        for j in range(objLen):
+            tempBytes = []
+            for k in range(byteWidth):
+                tempBytes.append(objBytes[(j*byteWidth)+k])
+            objList.append(int.from_bytes(tempBytes,'big',signed=signed))
+        
+        obj = (width,signed,objList)
+        heap.append(obj)
+        p += objSize
+    
+    symbols = []
+    for i in range(symbolLen):
+        sType = int(bytecode[p])
+        p += 1
+        sVal = int.from_bytes(bytecode[p:p+4],'big',signed=True)
+        p += 4
+        symbol = (sType,sVal)
+        symbols.append(symbol)
+    
+    vars = []
+    for i in range(varLen):
+        vars.append(int.from_bytes(bytecode[p:p+4],'big',signed=True))
+        p += 4
+    
+    code = []
+    for i in range(codeLen):
+        code.append(bytecode[p])
+        p += 1
+    
+    return (heap,symbols,vars,code)
+
+
+
+
+
+def intToBytes(num,size=32):
+    #Converts int32s into 4 bytes
     if num < 0:
         num += (1 << 32) 
-    b1 = num >> 24
-    b2 = (num % (1 << 24)) >> 16
-    b3 = (num % (1 << 16)) >> 8
-    b4 = num % (1 << 8)
-    return (b1,b2,b3,b4)
+    bytes = []
+    for i in range(size//8):
+        byte = (num % (1 << size-(8*i))) >> (size - 8 * (i+1))
+        bytes.append(byte)
+    return tuple(bytes)
 
-def bytesToInt(b1,b2,b3,b4):
-    b1 = b1 << 24
-    b2 = b2 << 16
-    b3 = b3 << 8
-    num = b1|b2|b3|b4
-    if (num & (1 << 31)):
-        num -= (1 << 32)
+def bytesToInt(*args,width=32,signed=True):
+    #converts bytes into a single integer
+    bytes = []
+    iargs = [int(x) for x in args]
+    for i in range(width//8):
+        bytes.append(iargs[i] << (width - 8*(i+1)))
+    num = 0
+    for byte in bytes:
+        num |= byte
+    if signed:
+        if (num & (1 << (width-1))):
+            num -= (1 << width)
     return num
     
 
 if __name__ == '__main__':
     #for testing
-    print(intToBytes(-4443))
-    print(bytesToInt(255,255,238,165))
     exe = stack_machine()
     c = '''
-72 101 108 108 111 44 32 119 111 114 108 100 10
-83 101 99 111 110 100 32 115 116 114 105 110 103
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67
 #### #### #### ####
-STRING 0
-STRING 1
+STRING 00 00 00 00
+STRING 00 00 00 01
 #### #### #### ####
-0 0
+00 00 00 00
+00 00 00 00
 #### #### #### ####
-LREF 0
+LREF 00
 ARRLEN
-STORE 0
-LOAD 0
-LOAD 1
-IFCEQ 0 15
-LREF 0
-LOAD 1
+STORE 00
+LOAD 00
+LOAD 01
+IFCEQ 00 0F
+LREF 00
+LOAD 01
 LARR
 IPRINT
-INC 1 1
-GOTO 255 240
-LREF 1
+INC 01 01
+GOTO FF F0
+LREF 01
 ARRLEN
-STORE 0
-PUSH 0
-STORE 1
-LOAD 0
-LOAD 1
-IFCEQ 0 15
-LREF 1
-LOAD 1
+STORE 00
+PUSH 00
+STORE 01
+LOAD 00
+LOAD 01
+IFCEQ 00 0F
+LREF 01
+LOAD 01
 LARR
 IPRINT
-INC 1 1
-GOTO 255 240
+INC 01 01
+GOTO FF F0
 '''
-    cc = exe.compile(c)
-    pack(cc,fileName="helloWorld.mcs")
+    f = open("helloWorld.mcs",'rb')
+    incode = f.read()
+    f.close()
+    uc = unpack(incode)
+    exe.initialize(uc[0],uc[1],uc[2])
+    exe.execute(uc[3])
 
 
