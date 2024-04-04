@@ -657,11 +657,36 @@ IPRINT
 INC 01 01
 GOTO FF F0
 '''
-    f = open("helloWorld.mcs",'rb')
-    incode = f.read()
+    d = '''
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+#### #### #### ####
+STRING 00 00 00 00
+#### #### #### ####
+00 00 00 00
+00 00 00 00
+#### #### #### ####
+LREF 00
+ARRLEN
+STORE 00
+LOAD 00
+LOAD 01
+IFCEQ 00 0F
+LREF 00
+LOAD 01
+LARR
+IPRINT
+INC 01 01
+GOTO FF F0
+'''
+    dc = exe.compile(d)
+    dp = pack(dc)
+    f = open("helloWorld.mcs",'wb')
+    f.write(dp)
     f.close()
-    uc = unpack(incode)
-    exe.initialize(uc[0],uc[1],uc[2])
-    exe.execute(uc[3])
+    cc = exe.compile(c)
+    cp = pack(cc)
+    f = open("helloWorld2.mcs",'wb')
+    f.write(cp)
+    f.close()
 
 

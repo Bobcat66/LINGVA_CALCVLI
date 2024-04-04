@@ -1,0 +1,19 @@
+.mcs file format documentation
+
+the .mcs file format is a binary file format made up of bytes
+There are four metadata values at the head of the file: heap length, symbol length, var length, code length
+Each metadata value is an unsigned 32-bit integer
+
+HEAPS
+each object in the heap is preceded by 4 bytes specifiying length,
+one byte specifiying the width of each element, 
+and one byte representing a boolean that determines whether the elements are signed
+
+SYMBOLS
+each symbol has one byte specifying its type, followed by 4 bytes which represent a 32-bit signed integer
+
+LOCAL VARIABLES
+Each variable consists of 4 bytes that represent a 32-bit signed integer
+
+CODE
+each opcode is a single byte wide
