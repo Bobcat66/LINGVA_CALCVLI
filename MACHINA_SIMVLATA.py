@@ -1,5 +1,6 @@
 #virtual machine for executing LINGVA CALCVLI code
 import re
+import dataclasses
 
 variables = [] #list of variables
 array = [] #list of arrays
@@ -32,13 +33,51 @@ class stack_machine():
         'IFNE' : 0x0e,
         'WINC' : 0x0f,
         'NOP' : 0x10,
-        'STORE' : 0x11
+        'STORE' : 0x11,
+        'IFCEQ' : 0x12, #Equality comparison between two values
+        'IFCNE' : 0x13, #Notequal
+        'IFCGR' : 0x14, #Greater
+        'IFCLS' : 0x15, #Lesser
+        'IFCGE' : 0x16, #Greater_or_Equal
+        'IFCLE' : 0x17, #Lesser_or_Equal
+        'IPRINT' : 0x18, #Prints top element of stack
+        'DUP' : 0x19, #Duplicates last element of stack
+        'DUP2' : 0x1a, #Duplicates last element of stack twice
+        'LREF' : 0x1b, #Load ref from Symbol table
+        'WLREF' : 0x1c,  #Load ref from Symbol table (wide) WIP
+        'LARR' : 0x1d, #Load element from array WIP
+        'STARR' : 0x1e, #Store element in array WIP
+        'ARRLEN' : 0x1f, #get array length
     }
+
+    type_dict = {
+        #Fundamental Variable types
+        'BYTE' : 0x00,
+        'SHORT' : 0x01,
+        'INT' : 0x02,
+        'FLOAT' : 0x03,
+        'CHAR' : 0x04,
+    }
+
+    ref_dict = {
+        #Reference types
+        'VAR' : 0x01,
+        'FUNC' : 0x02,
+        'STRING' : 0x03,
+        'IARR' : 0x04, #Int array
+        'LARR' : 0x05, #Long array
+        'FARR' : 0x06, #Float array
+        'RARR' : 0x07, #Ref array
+        'STRUCT' : 0x08, #WIP, to be implemented when Structs are added
+    }
+
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
     def __init__(self):
-        self.stack = [] # operation stack
-        self.memory = [] # local variables
+        self.stack = [] # operation stack, each entry is 4 bytes wide
+        self.memory = [] # local variables, each element is 4 bytes long, and is natively stored as an int
         self.ops = [] # list of instructions to be executed
+        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address 
+        self.heap = [] #Stores large data structures, like strings and arrays
         self.pointer = 0 # instruction pointer
     
     def getFwd(self,offset):
@@ -59,6 +98,16 @@ class stack_machine():
         arg1 = self.getFwd(offset+1)
         arg2 = self.getFwd(offset+2)
         return ((arg1 << 8) | arg2) #converts two bytes into unsigned 16 bit integer
+    
+    def toInt32(b1,b2,b3,b4):
+        #Converts 4 bytes to int32
+        b1 = b1 << 24
+        b2 = b2 << 16
+        b3 = b3 << 8
+        a = b1 | b2 | b3 | b4
+        if a & (1 << 31):
+            a -= (1 << 32)
+        return a
     
     def decompileOpcode(self,opcode):
         #Decompiles individual opcode
@@ -207,9 +256,135 @@ class stack_machine():
                 a = self.stack.pop()
                 self.memory[arg1] = a
                 return 1 + 1
+            case 0x12:
+                #IFCEQ
+                #Compares top two elements of stack. shifts if they are equal
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if b == c:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x13:
+                #IFCNE
+                #Compares top two elements of stack. shifts if they are equal
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if b != c:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x14:
+                #IFCGR
+                #Compares top two elements of stack. shifts if value1 is greater than value2
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if c > b:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x15:
+                #IFCLS
+                #Compares top two elements of stack. shifts if value1 is lesser than value2
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if c < b:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x16:
+                #IFCGE
+                #Compares top two elements of stack. shifts if value1 is greater or equal to value2
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if c >= b:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x17:
+                #IFCLE
+                #Compares top two elements of stack. shifts if value1 is lesser or equal to value2
+                #Takes one two-byte parameter, the location it should shift to
+                a = self.getInt16() 
+                b = self.stack.pop()
+                c = self.stack.pop()
+                if c <= b:
+                    return a
+                else:
+                    return 1 + 2
+            case 0x18:
+                #IPRINT
+                #Prints top element of stack as ASCII character
+                a = self.stack.pop()
+                print(chr(a),end="")
+                return 1
+            case 0x19:
+                #DUP
+                #Duplicates top element of stack
+                a = self.stack.pop()
+                self.stack.append(a)
+                self.stack.append(a)
+                return 1
+            case 0x1a:
+                #DUP2
+                #Duplicates top two elements of stack. Preserves order
+                a = self.stack.pop()
+                b = self.stack.pop()
+                self.stack.append(b)
+                self.stack.append(b)
+                self.stack.append(a)
+                self.stack.append(a)
+                return 1
+            case 0x1b:
+                #LREF
+                #Loads reference from symbol table
+                #takes one 1-byte parameter, the index of the reference in the symbol table
+                arg1 = self.getFwd(1)
+                self.stack.append(self.symbols[arg1][1])
+                return 1 + 1
+            case 0x1c:
+                #WLREF
+                #Loads reference from symbol table (WIDE)
+                #takes one 2-byte parameter, the index of the reference in the symbol table
+                arg1 = self.getInt16()
+                self.stack.append(self.symbols[arg1][1])
+                return 1 + 2
+            case 0x1d:
+                #LARR
+                #Load element of array
+                index = self.stack.pop()
+                arrayref = self.stack.pop()
+                self.stack.append(self.heap[arrayref][index])
+                return 1
+            case 0x1e:
+                #STARR
+                #Store element in array
+                value = self.stack.pop()
+                index = self.stack.pop()
+                arrayref = self.stack.pop()
+                self.heap[arrayref][index] = value
+                return 1
+            case 0x1f:
+                #ARRLEN
+                #Get array length
+                arrayref = self.stack.pop()
+                self.stack.append(len(self.heap[arrayref]))
+                return 1
                 
-    def initializeMemory(self,vars):
+    def initialize(self,heap,symbols,vars):
         self.memory = vars
+        self.symbols = symbols
+        self.heap = heap
 
     def execute(self,code: list,verbose=False):
         self.pointer = 0
@@ -236,22 +411,38 @@ class stack_machine():
                 self.pointer += a
         
     def compile(self,textCode: str, safe=True):
-        # radix is the base of the numbers in the code. default is 10
         # Compiles text code into numerical opcodes
         # DOES NOT COMPILE LINGVA CALCVLI, ONLY COMPILES TEXTUAL REPRESENTATIONS OF MACHINA SIMVLATA OPCODE
-        # Variable setup is separated from opcodes by '#### BEGIN CODE ####'
-        # Variable setup goes first, code comes second. Variables should be separated by spaces
+        # Sections of the code are separated by '#### #### #### ####'
+        # Heap setup goes first, then symbols, then Local memory, then code.
+        # Heap elements should be series of numerical bytes separated by spaces
+        # Symbols should be tuples of the following format: <info byte> <3-byte address>
+        # Variables should be separated by spaces
         # Compiler only supports simple numerical variables right now
-        # Safe catches errors, but slows down compilatin
-        textTup = textCode.split('#### BEGIN CODE ####')
-        prevars = textTup[0].strip().split()
+        # Safe catches errors, but slows down compilation
+        textTup = textCode.split('#### #### #### ####')
+        preheap = textTup[0].strip().split('\n')
+        heap = []
+        for ele in preheap:
+            byteArray = [int(x) for x in ele.split()]
+            heap.append(byteArray)
+        preSymbols = textTup[1].strip().split('\n')
+        symbols = []
+        for iele in preSymbols:
+            ele = iele.split()
+            if not ele[0].isnumeric():
+                symbol = (self.ref_dict[ele[0]],int(ele[1]))
+            else:
+                symbol = (int(ele[0]),int(ele[1]))
+            symbols.append(symbol)
+        prevars = textTup[2].strip().split()
         vars = [int(var) for var in prevars]
-        preText = textTup[1].strip()
+        preText = textTup[3].strip()
         precode = re.split('[ ,\n]',preText)
         if safe:
             precode = [x for x in precode if len(x) > 0]
         code = [int(x) if x.isnumeric() else self.command_dict[x] for x in precode]
-        return (vars,code)
+        return (heap,symbols,vars,code)
     
     def __repr__(self):
         return "stack_machine(\n    stack={0},\n    memory={1},\n    ops={2},\n    pointer={3}\n)".format(self.stack,self.memory,self.formatInstructions(),self.pointer)
@@ -282,8 +473,10 @@ class stack_machine():
 exp = stack_machine()
 
 a = '''
+#### #### #### ####
+#### #### #### ####
 5 13 11
-#### BEGIN CODE ####
+#### #### #### ####
 LOAD 1
 LOAD 0
 IFEQ 0,14
@@ -294,8 +487,10 @@ GOTO 255,243
 NOP
 '''
 fibonacci = '''
+#### #### #### ####
+#### #### #### ####
 0 1 20
-#### BEGIN CODE ####
+#### #### #### ####
 LOAD 2
 IFEQ 0 24
 LOAD 0
@@ -310,9 +505,84 @@ GOTO 255 233
 LOAD 0
 LOAD 1
 '''
-b = exp.compile(fibonacci)
-print(b)
-exp.initializeMemory(b[0])
-exp.execute(b[1],verbose=True)
+fibonacci2 = '''
+#### #### #### ####
+#### #### #### ####
+0 1 5
+#### #### #### ####
+LOAD 2
+IFEQ 0 22
+LOAD 0
+DUP
+LOAD 1
+DUP
+STORE 0
+ADD
+STORE 1
+WINC 0 2 255 255
+GOTO 255 235
+LOAD 0
+LOAD 1
+'''
+helloWorld = '''
+72 101 108 108 111 44 32 119 111 114 108 100 10
+#### #### #### ####
+STRING 0
+#### #### #### ####
+0 0
+#### #### #### ####
+LREF 0
+ARRLEN
+STORE 0
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 0
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
+'''
+helloWorld2 = '''
+72 101 108 108 111 44 32 119 111 114 108 100 10
+83 101 99 111 110 100 32 115 116 114 105 110 103
+#### #### #### ####
+STRING 0
+STRING 1
+#### #### #### ####
+0 0
+#### #### #### ####
+LREF 0
+ARRLEN
+STORE 0
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 0
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
+LREF 1
+ARRLEN
+STORE 0
+PUSH 0
+STORE 1
+LOAD 0
+LOAD 1
+IFCEQ 0 15
+LREF 1
+LOAD 1
+LARR
+IPRINT
+INC 1 1
+GOTO 255 240
+'''
+b = exp.compile(helloWorld)
+#print(b)
+exp.initialize(b[0],b[1],b[2])
+exp.execute(b[3],verbose=False)
 #print(repr(exp))
 
