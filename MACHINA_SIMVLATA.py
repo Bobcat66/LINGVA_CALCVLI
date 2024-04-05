@@ -18,7 +18,6 @@ Commands:
 class frame:
     #frames are 
     pc: int #program counter for frame
-    retAddress: int #which frame should the program return to after execution is complete
     localVars: list[int] #localvars
     opcodes: list[int] #opcodes to execute
     returnVal: int = None #return value
@@ -398,7 +397,7 @@ class stack_machine():
                 funcRef = self.stack.pop()
                 returnAddress = len(self.stack)
                 funcOps = self.heap[funcRef][2]
-                newFrame = frame(0,None,args,funcOps)
+                newFrame = frame(0,args,funcOps)
                 self.frame = newFrame
                 ret = self.execute(verbose=self.verbose)
 
@@ -427,7 +426,7 @@ class stack_machine():
         self.frames = []
         self.symbols = symbols
         self.heap = heap
-        newFrame = frame(0,None,vars,code)
+        newFrame = frame(0,vars,code)
         self.frame = newFrame
 
         #DEPRECIATED
