@@ -481,6 +481,9 @@ class stack_machine():
         b = self.stack.pop()
         self.stack.append(b/a)
 
+class virtual_machine():
+    heap = []
+    
 def pack(codeTuple):
     '''
     packs codetuple into byte array that can be written to a .mcs file
@@ -532,7 +535,6 @@ def pack(codeTuple):
     finLst += cLst
     outBytes = bytes(finLst)
     return outBytes
-
 
 def unpack(bytecode):
     '''
@@ -587,10 +589,6 @@ def unpack(bytecode):
         p += 1
     
     return (heap,symbols,vars,code)
-
-
-
-
 
 def intToBytes(num,size=32):
     #Converts int32s into 4 bytes
