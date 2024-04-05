@@ -1,4 +1,4 @@
-A list of standard MCS functions
+A list of standard MACHINA_SIMVLATA functions
 
 print 
 Takes one argument as a parameter, a reference to a string
@@ -20,3 +20,30 @@ PUSH 20
 CPRINT
 PUSH 00
 RETURN
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 00 21
+
+printl
+Takes one argument as a parameter, a reference to a string. Each string printed ends with a newline
+LOAD 00
+ARRLEN
+NEWVAR
+PUSH 00
+NEWVAR
+LOAD 01
+LOAD 02
+IFCEQ 00 0F
+LOAD 00
+LOAD 02
+LARR
+CPRINT
+INC 02 01
+GOTO FF F0
+PUSH 20
+CPRINT
+PUSH 0A
+CPRINT
+PUSH 00
+RETURN
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 0A 18 00 00 21
+
+
