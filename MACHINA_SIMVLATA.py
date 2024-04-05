@@ -650,6 +650,26 @@ if __name__ == '__main__':
     exe.initialize(dc[0],dc[1],dc[2],dc[3])
     exe.execute()
 '''
+    e = '''
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67
+#### #### #### ####
+FUNC 00 00 00 00
+STRING 00 00 00 01
+STRING 00 00 00 02
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LREF 00
+LREF 01
+CALL 01
+LREF 00
+LREF 02
+CALL 01
+PUSH 00
+RETURN
+    '''
     '''
     ec = exe.compile(e)
     f = open('lcbin/helloWorld3.mcs','wb')
