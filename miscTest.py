@@ -1,6 +1,10 @@
 print('hello world')
 a = 1
-def foo():
-    b = [1,2,3,4,5]
-    b.append(6)
+def foo(x):
+    print(x)
     print('hello world')
+    return 3
+def boo():
+    print('h')
+print(foo('bddd'))
+boo()
