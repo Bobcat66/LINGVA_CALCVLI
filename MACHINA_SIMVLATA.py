@@ -780,7 +780,7 @@ RETURN
     f.write(pack(ec))
     f.close()
     '''
-    f = open('helloWorldMethod.mcs','rb')
+    f = open('lcbin/helloWorld3.mcs','rb')
     fg = f.read()
     f.close()
     fe = unpack(fg)
