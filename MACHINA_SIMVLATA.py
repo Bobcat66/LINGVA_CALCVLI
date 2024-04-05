@@ -1,6 +1,7 @@
 #virtual machine for executing LINGVA CALCVLI code
 import re
 from dataclasses import dataclass
+import copy
 
 variables = [] #list of variables
 array = [] #list of arrays
@@ -20,6 +21,7 @@ class frame:
     retAddress: int #which frame should the program return to after execution is complete
     localVars: list[int] #localvars
     opcodes: list[int] #opcodes to execute
+    returnVal: int = None #return value
 
 
 class stack_machine():
@@ -57,8 +59,9 @@ class stack_machine():
         'LARR' : 0x1d, #Load element from array WIP
         'STARR' : 0x1e, #Store element in array WIP
         'ARRLEN' : 0x1f, #get array length
-        'RETURN' : 0x20, #pops top element of stack and returns it
-        'CALL_FUNCTION' : 0x21, #calls function based on reference from top of the stack
+        'CALL' : 0x20, #calls function based on reference from top of the stack
+        'RETURN' : 0x21, #pops top element of stack and returns it
+        'NEWVAR' : 0x22, #Pops top element and initializes new local variable
     }
 
     type_dict = {
@@ -84,6 +87,7 @@ class stack_machine():
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
     def __init__(self):
+        self.verbose = False
         self.stack = [] # operation stack, each entry is 4 bytes wide
         self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address or value (NOTE: SYMBOL VALUES ARE SIGNED)
         self.heap = [] #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
@@ -381,21 +385,58 @@ class stack_machine():
                 arrayref = self.stack.pop()
                 self.stack.append(len(self.heap[arrayref][2]))
                 return 1
+            case 0x20:
+                #TODO: Finish call command
+                #CALL
+                #Pops top element of operand stack, and creates a frame based off it, and transfers control to new frame. It also adds current frame to frame stack
+                #Takes one 1-byte parameter, the number of arguments the function
+                self.frames.append(copy.deepcopy(self.frame))
+                arg1 = self.getFwd(1)
+                args = []
+                for i in range(arg1):
+                    args.append(self.stack.pop())
+                funcRef = self.stack.pop()
+                returnAddress = len(self.stack)
+                funcOps = self.heap[funcRef][2]
+                newFrame = frame(0,None,args,funcOps)
+                self.frame = newFrame
+                ret = self.execute(verbose=self.verbose)
+
+                #Return of control to parent frame
+                self.frame = self.frames.pop()
+                self.stack = self.stack[0:returnAddress] #removes any residual stack elements from the frame executions
+                self.stack.append(ret)
+                return 1 + 1
+            case 0x21:
+                #RETURN
+                #pops top element of operand stack, and returns it
+                a = self.stack.pop()
+                self.frame.returnVal = a
+                return "RETURN"
+            case 0x22:
+                #NEWVAR
+                #pops top element of operand stack, and stores it in a new local variable
+                a = self.stack.pop()
+                self.frame.localVars.append(a)
+                return 1
+
+
+
                 
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
         self.symbols = symbols
         self.heap = heap
         newFrame = frame(0,None,vars,code)
-        self.frames.append(newFrame)
         self.frame = newFrame
 
         #DEPRECIATED
         self.ret = None
 
     def execute(self,verbose=False):
-
+        #executes current frame, returns output
         #if statement is up here to minimize the number of times the if statement is called
+        self.verbose = verbose
         if verbose:
             while self.frame.pc < len(self.frame.opcodes):
                 opcode = self.frame.opcodes[self.frame.pc]
@@ -406,11 +447,15 @@ class stack_machine():
                 print("Executing {0} ({1})".format('%02x' % opcode,self.decompileOpcode(opcode)))
                 print("------------------------------------------------------------")
                 a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward, or a flag signaling the executer to return a value
+                if a == "RETURN":
+                    return self.frame.returnVal
                 self.frame.pc += a
                 
         else:
             while self.frame.pc < len(self.frame.opcodes):
                 a = self.op(self.frame.opcodes[self.frame.pc]) #self.op returns the distance to move the instruction pointer forward
+                if a == "RETURN":
+                    return self.frame.returnVal
                 self.frame.pc += a
         
     def compile(self,textCode: str, safe=True):
@@ -432,14 +477,20 @@ class stack_machine():
             preObj = ele.split()
             width = int(preObj[0],base=16) #size of each element in bits
             byteWidth = width//8
-            signed = bool(preObj[1])
+            signed = bool(int(preObj[1],16))
             obj = (width,signed,[])
-            byteArray = [int(x,base=16) for x in ele.split()[2:]]
+            byteArray = []
+            for x in ele.split()[2:]:
+                inNum = int(x,16)
+                if not signed and inNum < 0:
+                    inNum += (1 << width)
+                byteArray.append(inNum)
             for i in range(len(byteArray)//byteWidth):
                 bytes = []
                 for j in range(byteWidth):
                     bytes.append(byteArray[(byteWidth*i)+j])
-                obj[2].append(bytesToInt(*bytes,width=width,signed=signed))
+                inInt = bytesToInt(*bytes,width=width,signed=signed)
+                obj[2].append(inInt)
             heap.append(obj)
 
         preSymbols = textTup[1].strip().split('\n')
@@ -662,18 +713,66 @@ LARR
 CPRINT
 INC 01 01
 GOTO FF F0
+PUSH 00
+RETURN
 '''
-    dc = exe.compile(d)
-    dp = pack(dc)
-    f = open("helloWorld.mcs",'wb')
-    f.write(dp)
-    f.close()
-    cc = exe.compile(c)
-    cp = pack(cc)
-    f = open("helloWorld2.mcs",'wb')
-    f.write(cp)
-    f.close()
-    exe.initialize(cc[0],cc[1],cc[2],cc[3])
+    #Print method. Reference to string being printed is passed as argument
+    #Raw code: 08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
+    g = '''
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+#### #### #### ####
+STRING 00 00 00 00
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LOAD 00
+ARRLEN
+NEWVAR
+PUSH 00
+NEWVAR
+LOAD 01
+LOAD 02
+IFCEQ 00 0F
+LOAD 00
+LOAD 02
+LARR
+CPRINT
+INC 02 01
+GOTO FF F0
+PUSH 20
+PUSH 00
+RETURN
+'''
+
+    #Uses print method
+    e = '''
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+#### #### #### ####
+FUNC 00 00 00 00
+STRING 00 00 00 01
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LREF 00
+LREF 01
+CALL 01
+PUSH 00
+RETURN
+'''
+    '''
+    dc = exe.compile(g)
+    print(dc[0])
+    for ele in dc[3]:
+        print("{0:02X} ".format(ele),end="")
+    print()
+    exe.initialize(dc[0],dc[1],dc[2],dc[3])
     exe.execute()
+'''
+
+    ec = exe.compile(e)
+    exe.initialize(ec[0],ec[1],ec[2],ec[3])
+    exe.execute()
+
 
 
