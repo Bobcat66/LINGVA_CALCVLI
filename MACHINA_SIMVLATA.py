@@ -3,17 +3,6 @@ import re
 from dataclasses import dataclass
 import copy
 
-variables = [] #list of variables
-array = [] #list of arrays
-funcs = [] #list of functions
-call_stack = []
-expression_stack = []
-
-"""
-Commands:
-
-"""
-
 @dataclass
 class frame:
     #frames are 
