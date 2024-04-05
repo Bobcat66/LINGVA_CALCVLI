@@ -1,0 +1,22 @@
+A list of standard MCS functions
+
+print 
+Takes one argument as a parameter, a reference to a string
+LOAD 00
+ARRLEN
+NEWVAR
+PUSH 00
+NEWVAR
+LOAD 01
+LOAD 02
+IFCEQ 00 0F
+LOAD 00
+LOAD 02
+LARR
+CPRINT
+INC 02 01
+GOTO FF F0
+PUSH 20
+CPRINT
+PUSH 00
+RETURN

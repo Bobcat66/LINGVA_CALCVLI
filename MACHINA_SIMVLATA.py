@@ -418,7 +418,7 @@ class stack_machine():
                 a = self.stack.pop()
                 self.frame.localVars.append(a)
                 return 1
-           
+    
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
         self.symbols = symbols
@@ -735,14 +735,13 @@ LARR
 CPRINT
 INC 02 01
 GOTO FF F0
-PUSH 20
 PUSH 00
 RETURN
 '''
 
     #Uses print method
     e = '''
-08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 00 21
 08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
 08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67
 #### #### #### ####
@@ -772,7 +771,7 @@ RETURN
 '''
     '''
     ec = exe.compile(e)
-    f = open('helloWorldMethod.mcs','wb')
+    f = open('lcbin/helloWorld3.mcs','wb')
     f.write(pack(ec))
     f.close()
     '''
