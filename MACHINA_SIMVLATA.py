@@ -418,6 +418,7 @@ class stack_machine():
                 a = self.stack.pop()
                 self.frame.localVars.append(a)
                 return 1
+                
     
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
