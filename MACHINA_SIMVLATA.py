@@ -1,6 +1,6 @@
 #virtual machine for executing LINGVA CALCVLI code
 import re
-import dataclasses
+from dataclasses import dataclass
 
 variables = [] #list of variables
 array = [] #list of arrays
@@ -12,6 +12,15 @@ expression_stack = []
 Commands:
 
 """
+
+@dataclass
+class frame:
+    #frames are 
+    pc: int #program counter for frame
+    retAddress: int #which frame should the program return to after execution is complete
+    localVars: list[int] #localvars
+    opcodes: list[int] #opcodes to execute
+
 
 class stack_machine():
     #Command dict is for easier readability
@@ -48,6 +57,8 @@ class stack_machine():
         'LARR' : 0x1d, #Load element from array WIP
         'STARR' : 0x1e, #Store element in array WIP
         'ARRLEN' : 0x1f, #get array length
+        'RETURN' : 0x20, #pops top element of stack and returns it
+        'CALL_FUNCTION' : 0x21, #calls function based on reference from top of the stack
     }
 
     type_dict = {
@@ -74,15 +85,14 @@ class stack_machine():
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
     def __init__(self):
         self.stack = [] # operation stack, each entry is 4 bytes wide
-        self.memory = [] # local variables, each element is 4 bytes wide, and is natively stored as an int
-        self.ops = [] # list of instructions to be executed
         self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address or value (NOTE: SYMBOL VALUES ARE SIGNED)
         self.heap = [] #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
-        self.pointer = 0 # instruction pointer
+        self.frames = [] #keeps track of frames. self.frames acts like a stack. when the topmost frame completes execution, it is destroyed and control shifts immediately to the next-highest frame
+        self.frame: frame = None #keeps track of the current frame. By default, main frame=0
     
     def getFwd(self,offset):
         #retrieves the element offset forward of the current instruction in the instruction list
-        return self.ops[self.pointer + offset]
+        return self.frame.opcodes[self.frame.pc + offset]
     
     def getInt16(self,offset=0):
         #retrieves next two elements after the offset from pointer in instruction list and combines them into signed 16 bit integer
@@ -108,10 +118,10 @@ class stack_machine():
     
     def formatInstructions(self,showPointer=False):
         #formats instructions into string
-        instructions = ['%02x' % ele for ele in self.ops]
+        instructions = ['%02x' % ele for ele in self.frame.opcodes]
         iStr = '['
         for i in range(len(instructions)):
-            if showPointer and i == self.pointer:
+            if showPointer and i == self.frame.pc:
                 iStr += '<<{0}>>, '.format(instructions[i])
             else:
                 iStr += instructions[i] + ', '
@@ -194,16 +204,16 @@ class stack_machine():
                 #Takes two one-byte parameters, the variable index and the constant
                 arg1 = self.getFwd(1) #index
                 arg2 = self.getFwd(2) #constant
-                a = self.memory[arg1]
+                a = self.frame.localVars[arg1]
                 a += arg2
-                self.memory[arg1] = a
+                self.frame.localVars[arg1] = a
                 return 1 + 2
             case 0x0c:
                 #LOAD
                 #Load local variable into instruction stack.
                 #takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
-                self.stack.append(self.memory[arg1])
+                self.stack.append(self.frame.localVars[arg1])
                 return 1 + 1
             case 0x0d:
                 #IFEQ
@@ -231,9 +241,9 @@ class stack_machine():
                 #Takes two two-byte parameters, the variable index and the constant
                 a = self.getuInt16() #index
                 b = self.getInt16(2) #constant
-                c = self.memory[a]
+                c = self.frame.localVars[a]
                 c += b
-                self.memory[a] = c
+                self.frame.localVars[a] = c
                 return 1 + 4
             case 0x10:
                 #NOP
@@ -245,7 +255,7 @@ class stack_machine():
                 #Takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
                 a = self.stack.pop()
-                self.memory[arg1] = a
+                self.frame.localVars[arg1] = a
                 return 1 + 1
             case 0x12:
                 #IFCEQ
@@ -372,34 +382,36 @@ class stack_machine():
                 self.stack.append(len(self.heap[arrayref][2]))
                 return 1
                 
-    def initialize(self,heap,symbols,vars):
-        self.memory = vars
+    def initialize(self,heap,symbols,vars,code):
+        self.frames = []
         self.symbols = symbols
         self.heap = heap
+        newFrame = frame(0,None,vars,code)
+        self.frames.append(newFrame)
+        self.frame = newFrame
 
-    def execute(self,code: list,verbose=False):
-        self.pointer = 0
-        self.ops = code
+        #DEPRECIATED
+        self.ret = None
+
+    def execute(self,verbose=False):
+
         #if statement is up here to minimize the number of times the if statement is called
         if verbose:
-            while self.pointer < len(code):
-                opcode = self.ops[self.pointer]
+            while self.frame.pc < len(self.frame.opcodes):
+                opcode = self.frame.opcodes[self.frame.pc]
                 print("Stack:",self.stack)
-                print("Memory:",self.memory)
+                print("Local Vars:",self.frame.localVars)
                 print("Instructions:",self.formatInstructions(showPointer=True))
-                print("Pointer:",self.pointer)
+                print("Program Counter:",self.frame.pc)
                 print("Executing {0} ({1})".format('%02x' % opcode,self.decompileOpcode(opcode)))
                 print("------------------------------------------------------------")
-                a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward
-                self.pointer += a
-            print("Stack:",self.stack)
-            print("Memory:",self.memory)
-            print("Instructions:",self.formatInstructions())
+                a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward, or a flag signaling the executer to return a value
+                self.frame.pc += a
                 
         else:
-            while self.pointer < len(code):
-                a = self.op(self.ops[self.pointer]) #self.op returns the distance to move the instruction pointer forward
-                self.pointer += a
+            while self.frame.pc < len(self.frame.opcodes):
+                a = self.op(self.frame.opcodes[self.frame.pc]) #self.op returns the distance to move the instruction pointer forward
+                self.frame.pc += a
         
     def compile(self,textCode: str, safe=True):
         # Compiles text code into numerical opcodes
@@ -456,7 +468,8 @@ class stack_machine():
         return (heap,symbols,vars,code)
     
     def __repr__(self):
-        return "stack_machine(\n    stack={0},\n    memory={1},\n    ops={2},\n    pointer={3}\n)".format(self.stack,self.memory,self.formatInstructions(),self.pointer)
+        #return "stack_machine(\n    stack={0},\n    memory={1},\n    ops={2},\n    pointer={3}\n)".format(self.stack,self.memory,self.formatInstructions(),self.pointer)
+        return "WIP"
 
 def pack(codeTuple):
     '''
@@ -611,7 +624,7 @@ IFCEQ 00 0F
 LREF 00
 LOAD 01
 LARR
-IPRINT
+CPRINT
 INC 01 01
 GOTO FF F0
 LREF 01
@@ -625,7 +638,7 @@ IFCEQ 00 0F
 LREF 01
 LOAD 01
 LARR
-IPRINT
+CPRINT
 INC 01 01
 GOTO FF F0
 '''
@@ -646,7 +659,7 @@ IFCEQ 00 0F
 LREF 00
 LOAD 01
 LARR
-IPRINT
+CPRINT
 INC 01 01
 GOTO FF F0
 '''
@@ -660,5 +673,7 @@ GOTO FF F0
     f = open("helloWorld2.mcs",'wb')
     f.write(cp)
     f.close()
+    exe.initialize(cc[0],cc[1],cc[2],cc[3])
+    exe.execute()
 
 
