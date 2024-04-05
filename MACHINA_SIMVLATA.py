@@ -5,7 +5,6 @@ import copy
 
 @dataclass
 class frame:
-    #frames are 
     pc: int #program counter for frame
     localVars: list[int] #localvars
     opcodes: list[int] #opcodes to execute
