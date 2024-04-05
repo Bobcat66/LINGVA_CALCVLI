@@ -418,10 +418,7 @@ class stack_machine():
                 a = self.stack.pop()
                 self.frame.localVars.append(a)
                 return 1
-
-
-
-                
+           
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
         self.symbols = symbols
@@ -443,7 +440,7 @@ class stack_machine():
                 print("Local Vars:",self.frame.localVars)
                 print("Instructions:",self.formatInstructions(showPointer=True))
                 print("Program Counter:",self.frame.pc)
-                print("Executing {0} ({1})".format('%02x' % opcode,self.decompileOpcode(opcode)))
+                print("Executing {0} ({1})".format('%02X' % opcode,self.decompileOpcode(opcode)))
                 print("------------------------------------------------------------")
                 a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward, or a flag signaling the executer to return a value
                 if a == "RETURN":
