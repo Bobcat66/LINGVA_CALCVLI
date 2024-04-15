@@ -2,6 +2,7 @@
 import re
 from dataclasses import dataclass
 import copy
+import math
 
 @dataclass
 class frame:
@@ -49,6 +50,7 @@ class stack_machine():
         'CALL' : 0x20, #calls function based on reference from top of the stack
         'RETURN' : 0x21, #pops top element of stack and returns it
         'NEWVAR' : 0x22, #Pops top element and initializes new local variable
+        'FLOAD' : 0x23, #Load float from local variable into op stack
     }
 
     type_dict = {
@@ -201,7 +203,7 @@ class stack_machine():
                 return 1 + 2
             case 0x0c:
                 #LOAD
-                #Load local variable into instruction stack.
+                #Load local variable into operand stack.
                 #takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
                 self.stack.append(self.frame.localVars[arg1])
@@ -406,8 +408,46 @@ class stack_machine():
                 a = self.stack.pop()
                 self.frame.localVars.append(a)
                 return 1
-                
-    
+            case 0x23:
+                #FLOAD
+                #Loads local variable as float into operand stack 
+                #Takes one parameter, the variable index 
+                #MACHINA_CALCVLI uses the IEEE 754 standard for floating-point numbers
+                arg1 = self.getFwd(1)
+                var = self.frame.localVars[arg1]
+                var = intToFloat(var)
+                self.stack.append(var)
+                return 1 + 1
+            case 0x24:
+                #FLARR
+                #Load float from array
+                #LARR
+                #Load element of array
+                index = self.stack.pop()
+                arrayref = self.stack.pop()
+                num = self.heap[arrayref][2][index]
+                self.stack.append(intToFloat(num))
+                return 1
+            case 0x25:
+                #FSTARR
+                #Store float in array
+                value = self.stack.pop()
+                index = self.stack.pop()
+                arrayref = self.stack.pop()
+                value = intToFloat(value)
+                self.heap[arrayref][2][index] = value
+                return 1
+            case 0x26:
+                #FSTORE
+                #Pops top element of stack, Stores as float in variable
+                #Takes one one-byte parameter, the variable index
+                arg1 = self.getFwd(1)
+                a = self.stack.pop()
+                a = floatToInt(1)
+                self.frame.localVars[arg1] = a
+                return 1 + 1
+
+ 
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
         self.symbols = symbols
@@ -596,14 +636,14 @@ def unpack(bytecode):
     for i in range(symbolLen):
         sType = int(bytecode[p])
         p += 1
-        sVal = int.from_bytes(bytecode[p:p+4],'big',signed=True)
+        sVal = int.from_bytes(bytecode[p:p+4],'big',signed=False)
         p += 4
         symbol = (sType,sVal)
         symbols.append(symbol)
     
     vars = []
     for i in range(varLen):
-        vars.append(int.from_bytes(bytecode[p:p+4],'big',signed=True))
+        vars.append(int.from_bytes(bytecode[p:p+4],'big',signed=False))
         p += 4
     
     code = []
@@ -636,7 +676,59 @@ def bytesToInt(*args,width=32,signed=True):
         if (num & (1 << (width-1))):
             num -= (1 << width)
     return num
-    
+
+def intToFloat(var: int):
+    #Converts signed or unsigned int into signed float
+    #Uses IEEE 754 Binary32 standard
+    if var < 0:
+        var += (1 << 31)
+    sign = var >> 31
+    power = ((var % (1 << 31)) >> 23)
+    mantissa = (var % (1 << 23))
+    mantissa *= (2**-23)
+    match power:
+        case 0:
+            return (-1)**sign * (mantissa * (2**-126))
+        case 255:
+            if mantissa == 0:
+                if sign == 0:
+                    return float('inf')
+                else:
+                    return float('-inf')
+            else:
+                return float('nan')
+        case _:
+            mantissa += 1
+            power -= 127
+            return (-1)**sign * mantissa * (2**power)
+
+def floatToInt(var: float):
+    #Converts signed float to unsigned int
+    sign = (1 if (var < 0) else 0)
+    sign = sign << 31
+    var = abs(var)
+    vals = math.frexp(var)
+    mantissa = vals[0] * 2
+    power = vals[1] - 1
+    power += 127
+    mantissa -= 1
+    mantissa = int(mantissa * (2**23))
+    power <<= 23 
+    a = sign | power | mantissa
+    return a
+
+def intToUint(num: int):
+    if num < 0:
+        return num + (1 << 32)
+    else:
+        return num
+
+def UintToInt(num: int):
+    if (num & (1 << 31)):
+        num -= (1 << 32)
+    return num
+
+
 
 if __name__ == '__main__':
     #for testing
@@ -653,7 +745,7 @@ if __name__ == '__main__':
     e = '''
 08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
 08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
-08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67
+08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67 0A
 #### #### #### ####
 FUNC 00 00 00 00
 STRING 00 00 00 01
@@ -670,18 +762,23 @@ CALL 01
 PUSH 00
 RETURN
     '''
-    '''
+    ''' 
     ec = exe.compile(e)
     f = open('lcbin/helloWorld3.mcs','wb')
     f.write(pack(ec))
     f.close()
-    '''
+'''
     f = open('lcbin/helloWorld3.mcs','rb')
     fg = f.read()
     f.close()
     fe = unpack(fg)
     exe.initialize(fe[0],fe[1],fe[2],fe[3])
     exe.execute()
+    print(intToFloat(3251109888))
+    print(floatToInt(-25.0))
+    print(intToUint(-3))
+    print(UintToInt(4294967293))
+
 
 
 

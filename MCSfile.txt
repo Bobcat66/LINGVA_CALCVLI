@@ -10,10 +10,10 @@ one byte specifiying the width of each element,
 and one byte representing a boolean that determines whether the elements are signed
 
 SYMBOLS
-each symbol has one byte specifying its type, followed by 4 bytes which represent a 32-bit signed integer
+each symbol has one byte specifying its type, followed by 4 bytes which represent a 32-bit unsigned integer
 
 LOCAL VARIABLES
-Each variable consists of 4 bytes that represent a 32-bit signed integer
+Each variable consists of 4 bytes that represent a 32-bit unsigned integer
 
 CODE
 each opcode is a single byte wide
