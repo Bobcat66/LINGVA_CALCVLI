@@ -26,13 +26,13 @@ class stack_machine():
         'BXOR' : 0x08,
         'BNOT' : 0x09,
         'GOTO' : 0x0a,
-        'INC' : 0x0b,
-        'LOAD' : 0x0c,
+        'INC' : 0x0b, #Increment variable
+        'ILOAD' : 0x0c, #Load int from local variable
         'IFEQ' : 0x0d, 
         'IFNE' : 0x0e,
         'WINC' : 0x0f,
         'NOP' : 0x10,
-        'STORE' : 0x11,
+        'ISTORE' : 0x11, #Stores int in variable
         'IFCEQ' : 0x12, #Equality comparison between two values
         'IFCNE' : 0x13, #Notequal
         'IFCGR' : 0x14, #Greater
@@ -44,13 +44,20 @@ class stack_machine():
         'DUP2' : 0x1a, #Duplicates last element of stack twice
         'LREF' : 0x1b, #Load ref from Symbol table
         'WLREF' : 0x1c,  #Load ref from Symbol table (wide) WIP
-        'LARR' : 0x1d, #Load element from array WIP
-        'STARR' : 0x1e, #Store element in array WIP
+        'ILARR' : 0x1d, #Load int from array WIP
+        'ISTARR' : 0x1e, #Store int in array WIP
         'ARRLEN' : 0x1f, #get array length
         'CALL' : 0x20, #calls function based on reference from top of the stack
         'RETURN' : 0x21, #pops top element of stack and returns it
         'NEWVAR' : 0x22, #Pops top element and initializes new local variable
         'FLOAD' : 0x23, #Load float from local variable into op stack
+        'FLARR' : 0x24, #Load float from array
+        'FSTARR' : 0x25, #Store top ele in opstack into array as float
+        'FSTORE' : 0x26, #Store top ele in opstack into local var as float
+        'ITOSI' : 0x27, #Converts int to signed int
+        'SITOI' : 0x28, #Converts signed int to int
+        'SITOFL' : 0x29, #Converts signed int to float
+        'ITOFL' : 0x2a, #Converts int to float
     }
 
     type_dict = {
@@ -72,6 +79,7 @@ class stack_machine():
         'FARR' : 0x06, #Float array
         'RARR' : 0x07, #Ref array
         'STRUCT' : 0x08, #WIP, to be implemented when Structs are added
+        'SIARR' : 0x09, #Signed int array
     }
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
@@ -446,6 +454,33 @@ class stack_machine():
                 a = floatToInt(1)
                 self.frame.localVars[arg1] = a
                 return 1 + 1
+            case 0x27:
+                #ITOSI
+                #Converts top element from int to signed int
+                a = self.stack.pop()
+                a = UintToInt(a)
+                self.stack.append(a)
+                return 1
+            case 0x28:
+                #SITOI
+                #Converts top element from signed into to int
+                a = self.stack.pop()
+                a = intToUint(a)
+                self.stack.append(a)
+                return 1
+            case 0x29:
+                #ITOFL
+                a = self.stack.pop()
+                a = float(a)
+                self.stack.append(a)
+                return 1
+            case 0x2a:
+                #SITOFL
+                a = self.stack.pop()
+                a = float(a)
+                self.stack.append(a)
+                return 1
+
 
  
     def initialize(self,heap,symbols,vars,code):
@@ -524,9 +559,9 @@ class stack_machine():
             ele = sele.split()
             bele1 = [int(x,16) for x in ele[1:]]
             if not len(ele[0]) == 2:
-                symbol = (self.ref_dict[ele[0]],bytesToInt(*bele1,signed=True))
+                symbol = (self.ref_dict[ele[0]],bytesToInt(*bele1,signed=False))
             else:
-                symbol = (int(ele[0],base=16),bytesToInt(*bele1,signed=True))
+                symbol = (int(ele[0],base=16),bytesToInt(*bele1,signed=False))
             symbols.append(symbol)
 
         prevars = textTup[2].strip().split('\n')
@@ -534,7 +569,7 @@ class stack_machine():
         vars = []
         for ele in prevars:
             ele1 = [int(x,16) for x in ele.split()]
-            vars.append(bytesToInt(*ele1,signed=True))
+            vars.append(bytesToInt(*ele1,signed=False))
 
         preText = textTup[3].strip()
         precode = re.split('[ ,\n]',preText)
@@ -663,7 +698,7 @@ def intToBytes(num,size=32):
         bytes.append(byte)
     return tuple(bytes)
 
-def bytesToInt(*args,width=32,signed=True):
+def bytesToInt(*args,width=32,signed=False):
     #converts bytes into a single integer
     bytes = []
     iargs = [int(x) for x in args]
