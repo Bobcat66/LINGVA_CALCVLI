@@ -3,11 +3,14 @@ import re
 from dataclasses import dataclass
 import copy
 import math
+import sys
+import io
+import msvcrt
 
 @dataclass
 class frame:
     pc: int #program counter for frame
-    localVars: list[int] #localvars
+    localVars: list[int] #localvars, Signed ints
     opcodes: list[int] #opcodes to execute
     returnVal: int = None #return value
 
@@ -43,9 +46,9 @@ class stack_machine():
         'DUP' : 0x19, #Duplicates last element of stack
         'DUP2' : 0x1a, #Duplicates last element of stack twice
         'LREF' : 0x1b, #Load ref from Symbol table
-        'WLREF' : 0x1c,  #Load ref from Symbol table (wide) WIP
-        'ILARR' : 0x1d, #Load int from array WIP
-        'ISTARR' : 0x1e, #Store int in array WIP
+        'WLREF' : 0x1c,  #Load ref from Symbol table (wide) #TODO
+        'ILARR' : 0x1d, #Load int from array #TODO
+        'ISTARR' : 0x1e, #Store int in array #TODO
         'ARRLEN' : 0x1f, #get array length
         'CALL' : 0x20, #calls function based on reference from top of the stack
         'RETURN' : 0x21, #pops top element of stack and returns it
@@ -58,6 +61,34 @@ class stack_machine():
         'SITOI' : 0x28, #Converts signed int to int
         'SITOFL' : 0x29, #Converts signed int to float
         'ITOFL' : 0x2a, #Converts int to float
+        'INPUT' : 0x2b, #Reads line from input stream and appends it to stack sequentially
+        'RSARR' : 0x2c, #Resizes array. Takes two parameters: the array length and the width of each element
+        'SWAP' : 0x2d, #Swaps topmost element and second topmost element on stack
+        'MSWAP' : 0x2e
+    }
+
+    #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
+    offsetDict = {
+        0x00 : 2,
+        0x0a : 3,
+        0x0b : 3,
+        0x0c : 2,
+        0x0d : 3,
+        0x0e : 3,
+        0x0f : 5,
+        0x11 : 2,
+        0x12 : 3,
+        0x13 : 3,
+        0x14 : 3,
+        0x15 : 3,
+        0x16 : 3,
+        0x17 : 3,
+        0x1b : 2,
+        0x1c : 3,
+        0x20 : 2,
+        0x23 : 2,
+        0x26 : 2,
+        0x2e : 2
     }
 
     type_dict = {
@@ -83,13 +114,15 @@ class stack_machine():
     }
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
-    def __init__(self):
+    def __init__(self,input: io.StringIO,output: io.StringIO):
         self.verbose = False
         self.stack = [] # operation stack, each entry is 4 bytes wide
-        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address or value (NOTE: SYMBOL VALUES ARE SIGNED)
+        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address
         self.heap = [] #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
         self.frames = [] #keeps track of frames. self.frames acts like a stack. when the topmost frame completes execution, it is destroyed and control shifts immediately to the next-highest frame
         self.frame: frame = None #keeps track of the current frame. By default, main frame=0
+        self.inStream: io.StringIO = input
+        self.outStream: io.StringIO = output
     
     def getFwd(self,offset):
         #retrieves the element offset forward of the current instruction in the instruction list
@@ -119,7 +152,16 @@ class stack_machine():
     
     def formatInstructions(self,showPointer=False):
         #formats instructions into string
-        instructions = ['%02x' % ele for ele in self.frame.opcodes]
+        instructionPosList = set() #list of indexes of instructions
+        i = 0
+        while i < len(self.frame.opcodes):
+            instructionPosList.add(i)
+            try:
+                i += self.offsetDict[self.frame.opcodes[i]]
+            except KeyError:
+                i += 1
+        instructions = []
+        instructions = [self.decompileOpcode(self.frame.opcodes[i]) if i in instructionPosList else '%02X' % self.frame.opcodes[i] for i in range(len(self.frame.opcodes))]
         iStr = '['
         for i in range(len(instructions)):
             if showPointer and i == self.frame.pc:
@@ -130,6 +172,11 @@ class stack_machine():
         iStr += ']'
         return iStr
     
+    @classmethod
+    def rawFormatInstructions(inlist):
+        #formats instructions into raw numbers
+        return ['%02X' % ele for ele in inlist]
+    
     def op(self,opcode):
         #Executes a single opcode
         match opcode:
@@ -137,35 +184,47 @@ class stack_machine():
                 #PUSH
                 #Append value to stack. 
                 #Takes one one-byte parameter, the value to be added.
+                # In: ...
+                # Out ... value
                 arg1 = self.getFwd(1) #push value
                 self.stack.append(arg1)
                 return 1 + 1
             case 0x01:
                 #POP
                 #Remove top element of stack
+                # In: ... value
+                # Out: ...
                 self.stack.pop()
                 return 1
             case 0x02:
                 #ADD
                 #Pop top two elements of stack, add them, and push result to stack
+                # In: ... b a
+                # Out: ... (b+a)
                 a, b = self.stack.pop(), self.stack.pop()
                 self.stack.append(b+a)
                 return 1
             case 0x03:
                 #SUB
                 #Pop top two elements of stack, subtract them, and push result to stack
+                # In: ... b a
+                # Out: ... (b-a)
                 a, b = self.stack.pop(), self.stack.pop()
                 self.stack.append(b-a)
                 return 1
             case 0x04:
                 #MULT
                 #Pop top two elements of stack, multiply them, and push result to stack
+                # In: ... b a
+                # Out: ... (b*a)
                 a, b = self.stack.pop(), self.stack.pop()
                 self.stack.append(b*a)
                 return 1
             case 0x05:
                 #DIV
                 #Pop top two elements of stack, divide them, and push result to stack
+                # In: ... b a
+                # Out: ... (b/a)
                 a, b = self.stack.pop(), self.stack.pop()
                 self.stack.append(b/a)
                 return 1
@@ -251,7 +310,7 @@ class stack_machine():
                 #No operation
                 return 1
             case 0x11:
-                #STORE
+                #ISTORE
                 #Pops top element of stack, and stores it at index in memory
                 #Takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
@@ -328,7 +387,8 @@ class stack_machine():
                 #IPRINT
                 #Prints top element of stack as ASCII character
                 a = self.stack.pop()
-                print(chr(a),end="")
+                self.outStream.write(chr(a))
+                self.outStream.flush()
                 return 1
             case 0x19:
                 #DUP
@@ -369,7 +429,7 @@ class stack_machine():
                 self.stack.append(self.heap[arrayref][2][index])
                 return 1
             case 0x1e:
-                #STARR
+                #ISTARR
                 #Store element in array
                 value = self.stack.pop()
                 index = self.stack.pop()
@@ -480,7 +540,45 @@ class stack_machine():
                 a = float(a)
                 self.stack.append(a)
                 return 1
-
+            case 0x2b:
+                #INPUT
+                #Reads line from inStream, and pushes characters to top of stack. first character is the first in, last char is the last in.
+                #After that, it pushes the number of characters added to the top of the stach
+                a = self.inStream.readline()
+                for char in a:
+                    self.stack.append(ord(char))
+                self.stack.append(len(a))
+                return 1
+            case 0x2c:
+                #RSARR
+                #resizes array
+                #Also wipes data from array
+                # In: ... newSize aRef
+                # Out: ... 
+                arrayRef = self.stack.pop()
+                newSize = self.stack.pop()
+                newLst = []
+                for i in range(newSize):
+                    newLst.append(0)
+                self.heap[arrayRef] = (self.heap[arrayRef][0],self.heap[arrayRef][1],newLst)
+                return 1
+            case 0x2d:
+                #SWAP
+                a = self.stack.pop()
+                b = self.stack.pop()
+                self.stack.append(a)
+                self.stack.append(b)
+                return 1
+            case 0x2e:
+                #MSWAP
+                #Swaps top element and nth element from top in stack
+                #takes one parameter, the position to swap with in the stack. Top of the stack = 1
+                arg1 = self.getFwd(1)
+                pos = len(self.stack) - arg1
+                a = self.stack[pos]
+                self.stack[pos] = self.stack.pop()
+                self.stack.append(a)
+                return 1 + 1
 
  
     def initialize(self,heap,symbols,vars,code):
@@ -502,9 +600,12 @@ class stack_machine():
                 opcode = self.frame.opcodes[self.frame.pc]
                 print("Stack:",self.stack)
                 print("Local Vars:",self.frame.localVars)
+                print("Heap:")
+                for ele in self.heap:
+                    print(ele)
                 print("Instructions:",self.formatInstructions(showPointer=True))
                 print("Program Counter:",self.frame.pc)
-                print("Executing {0} ({1})".format('%02X' % opcode,self.decompileOpcode(opcode)))
+                print("Executing {1} ({0})".format('%02X' % opcode,self.decompileOpcode(opcode)))
                 print("------------------------------------------------------------")
                 a = self.op(opcode) #self.op returns the distance to move the instruction pointer forward, or a flag signaling the executer to return a value
                 if a == "RETURN":
@@ -767,7 +868,50 @@ def UintToInt(num: int):
 
 if __name__ == '__main__':
     #for testing
-    exe = stack_machine()
+    #a is user input function
+    #Takes two arguments as parameters: a reference to a string representing a prompt, and a reference to a string that the output should be directed to
+    a = '''
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+08 00 00
+#### #### #### ####
+STRING 00 00 00 00
+STRING 00 00 00 01
+#### #### #### ####
+00 00 00 00
+00 00 00 00
+00 00 00 00
+#### #### #### ####
+LREF 00
+ARRLEN
+ISTORE 00
+ILOAD 00
+ILOAD 01
+IFCEQ 00 0F
+LREF 00
+ILOAD 01
+ILARR
+CPRINT
+INC 01 01
+GOTO FF F0
+INPUT
+DUP
+LREF 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+LREF 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F1
+LREF 01
+'''
+    exe = stack_machine(input=sys.stdin,output=sys.stdout)
     '''
     dc = exe.compile(g)
     print(dc[0])
@@ -803,12 +947,18 @@ RETURN
     f.write(pack(ec))
     f.close()
 '''
-    f = open('lcbin/helloWorld3.mcs','rb')
+    '''f = open('lcbin/helloWorld3.mcs','rb')
     fg = f.read()
     f.close()
     fe = unpack(fg)
     exe.initialize(fe[0],fe[1],fe[2],fe[3])
-    exe.execute()
+    exe.execute()'''
+    ac = exe.compile(a)
+    exe.initialize(ac[0],ac[1],ac[2],ac[3])
+    print("INIT")
+    exe.execute(verbose=True)
+    print(exe.stack)
+    print(exe.heap)
     print(intToFloat(3251109888))
     print(floatToInt(-25.0))
     print(intToUint(-3))
