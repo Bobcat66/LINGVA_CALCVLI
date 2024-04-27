@@ -148,3 +148,229 @@ LREF 02
 CALL 01
 PUSH 00
 RETURN
+
+test code
+
+    #for testing
+    #a is user input function
+    #Takes two arguments as parameters: a reference to a string representing a prompt, and a reference to a string that the output should be directed to
+    a = '''
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+08 00 00
+#### #### #### ####
+STRING 00 00 00 00
+STRING 00 00 00 01
+#### #### #### ####
+00 00 00 00
+00 00 00 00
+00 00 00 00
+#### #### #### ####
+LREF 00
+ARRLEN
+ISTORE 00
+ILOAD 00
+ILOAD 01
+IFCEQ 00 0F
+LREF 00
+ILOAD 01
+ILARR
+CPRINT
+INC 01 01
+GOTO FF F0
+INPUT
+DUP
+LREF 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+LREF 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F0
+LREF 01
+'''
+    #LOCALVAR0 = promptstringref
+    #LOCALVAR1 = Outputstringref
+    #LOCALVAR2
+    #LOCALVAR3
+    #LOCALVAR4
+    a0 = '''
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+ILOAD 00
+ARRLEN
+ISTORE 02
+ILOAD 02
+ILOAD 03
+IFCEQ 00 0F
+ILOAD 00
+ILOAD 03
+ILARR
+CPRINT
+INC 03 01
+GOTO FF F0
+INPUT
+DUP
+ILOAD 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+ILOAD 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F0
+ILOAD 01
+RETURN
+'''
+    a1 = '''
+08 00 00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 0A 18 00 00 21
+08 00 50 6C 65 61 73 65 20 65 6E 74 65 72 20 61 20 73 74 72 69 6E 67 3A 20
+08 00 00
+#### #### #### ####
+FUNC 00 00 00 00
+FUNC 00 00 00 01
+STRING 00 00 00 02
+STRING 00 00 00 03
+#### #### #### ####
+00 00 00 02
+00 00 00 03
+#### #### #### ####
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+ILOAD 00
+ARRLEN
+ISTORE 02
+ILOAD 02
+ILOAD 03
+IFCEQ 00 0F
+ILOAD 00
+ILOAD 03
+ILARR
+CPRINT
+INC 03 01
+GOTO FF F0
+INPUT
+DUP
+ILOAD 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+ILOAD 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F0
+ILOAD 01
+RETURN
+'''
+    exe = stack_machine(input=sys.stdin,output=sys.stdout)
+    '''
+    dc = exe.compile(g)
+    print(dc[0])
+    for ele in dc[3]:
+        print("{0:02X} ".format(ele),end="")
+    print()
+    exe.initialize(dc[0],dc[1],dc[2],dc[3])
+    exe.execute()
+'''
+    e = '''
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
+08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
+08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67 0A
+#### #### #### ####
+FUNC 00 00 00 00
+STRING 00 00 00 01
+STRING 00 00 00 02
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LREF 00
+LREF 01
+CALL 01
+LREF 00
+LREF 02
+CALL 01
+PUSH 00
+RETURN
+    '''
+    ''' 
+    ec = exe.compile(e)
+    f = open('lcbin/helloWorld3.mcs','wb')
+    f.write(pack(ec))
+    f.close()
+'''
+    '''f = open('lcbin/helloWorld3.mcs','rb')
+    fg = f.read()
+    f.close()
+    fe = unpack(fg)
+    exe.initialize(fe[0],fe[1],fe[2],fe[3])
+    exe.execute()'''
+
+    promptTest = """
+08 00 00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 0A 18 00 00 21
+08 00 50 6C 65 61 73 65 20 65 6E 74 65 72 20 61 20 73 74 72 69 6E 67 3A 20
+08 00 00
+#### #### #### ####
+FUNC 00 00 00 00
+FUNC 00 00 00 01
+STRING 00 00 00 02
+STRING 00 00 00 03
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LREF 00
+LREF 02
+LREF 03
+CALL 02
+LREF 01
+SWAP
+CALL 01
+PUSH 00
+RETURN
+"""
+    ac = exe.compile(a1)
+    exe.initialize(ac[0],ac[1],ac[2],ac[3])
+    print("INIT")
+    exe.execute()
+    print(exe.stack)
+    for ele in exe.heap:
+        print(ele)
+    print(intToFloat(3251109888))
+    print(floatToInt(-25.0))
+    print(intToUint(-3))
+    print(UintToInt(4294967293))
+    print(stack_machine.compileInstructions(a0))
+    print(exe)

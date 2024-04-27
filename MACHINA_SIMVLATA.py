@@ -13,6 +13,8 @@ class frame:
     localVars: list[int] #localvars, Signed ints
     opcodes: list[int] #opcodes to execute
     returnVal: int = None #return value
+    def __repr__(self):
+        return "frame(pc={0},localVars={1},opcodes={2},returnVal={3})".format(self.pc,self.localVars,self.opcodes,self.returnVal)
 
 
 class stack_machine():
@@ -114,15 +116,43 @@ class stack_machine():
     }
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
-    def __init__(self,input: io.StringIO,output: io.StringIO):
-        self.verbose = False
-        self.stack = [] # operation stack, each entry is 4 bytes wide
-        self.symbols = [] #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address
-        self.heap = [] #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
-        self.frames = [] #keeps track of frames. self.frames acts like a stack. when the topmost frame completes execution, it is destroyed and control shifts immediately to the next-highest frame
-        self.frame: frame = None #keeps track of the current frame. By default, main frame=0
-        self.inStream: io.StringIO = input
-        self.outStream: io.StringIO = output
+    def __init__(
+            self,
+            verbose: bool = False,
+            stack: list[int] = None, #operation stack, each entry is 4 bytes wide
+            symbols: list[int] = None, #Symbol table, keeps track of references. Each entry is a 1 byte data field followed by a 4 byte address
+            heap: list[tuple] = None, #Stores large data structures, like strings and arrays. each element of the heap is a threeple: (<element width in bits>,<signed>,<list of elements>)
+            frames: list[frame] = None, #keeps track of frames. self.frames acts like a stack. when the topmost frame completes execution, it is destroyed and control shifts immediately to the next-highest frame
+            frame: frame = None, #keeps track of the current frame. By default, main frame=0
+            input: io.StringIO = sys.stdin,
+            output: io.StringIO = sys.stdout
+        ):
+
+        self.verbose = verbose
+
+        if stack is None:
+            self.stack = []
+        else:
+            self.stack = stack
+
+        if symbols is None:
+            self.symbols = []
+        else:
+            self.symbols = symbols
+
+        if heap is None:
+            self.heap = []
+        else:
+            self.heap = heap
+
+        if frames is None:
+            self.frames = []
+        else:
+            self.frames = frame
+
+        self.frame = frame
+        self.inStream = input
+        self.outStream = output
     
     def getFwd(self,offset):
         #retrieves the element offset forward of the current instruction in the instruction list
@@ -150,6 +180,20 @@ class stack_machine():
         index = val_list.index(opcode)
         return key_list[index]
     
+    @classmethod
+    def decompileRef(cls,ref):
+        key_list = list(cls.ref_dict.keys())
+        val_list = list(cls.ref_dict.values())
+        index = val_list.index(ref)
+        return key_list[index]
+    
+    @staticmethod
+    def getDictKey(dict,val):
+        key_list = list(dict.keys())
+        val_list = list(dict.values())
+        index = val_list.index(val)
+        return key_list[index]
+    
     def formatInstructions(self,showPointer=False):
         #formats instructions into string
         instructionPosList = set() #list of indexes of instructions
@@ -172,10 +216,21 @@ class stack_machine():
         iStr += ']'
         return iStr
     
-    @classmethod
+    @staticmethod
     def rawFormatInstructions(inlist):
         #formats instructions into raw numbers
         return ['%02X' % ele for ele in inlist]
+    
+    @classmethod
+    def compileInstructions(cls, codetext):
+        #Compiles MS code into string of hexadecimal integers. Useful for working directly with MS code
+        precode = re.split('[ ,\n]',codetext)
+        precode = [x for x in precode if len(x) > 0]
+        code = [int(x,base=16) if len(x) == 2 else cls.command_dict[x] for x in precode]
+        outStr = ""
+        for ele in code:
+            outStr += "%02X " % ele
+        return outStr
     
     def op(self,opcode):
         #Executes a single opcode
@@ -422,7 +477,7 @@ class stack_machine():
                 self.stack.append(self.symbols[arg1][1])
                 return 1 + 2
             case 0x1d:
-                #LARR
+                #ILARR
                 #Load element of array
                 index = self.stack.pop()
                 arrayref = self.stack.pop()
@@ -455,7 +510,7 @@ class stack_machine():
                 funcRef = self.stack.pop()
                 returnAddress = len(self.stack)
                 funcOps = self.heap[funcRef][2]
-                newFrame = frame(0,args,funcOps)
+                newFrame = frame(pc=0,localVars=args,opcodes=funcOps)
                 self.frame = newFrame
                 ret = self.execute(verbose=self.verbose)
 
@@ -580,7 +635,6 @@ class stack_machine():
                 self.stack.append(a)
                 return 1 + 1
 
- 
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
         self.symbols = symbols
@@ -618,8 +672,9 @@ class stack_machine():
                 if a == "RETURN":
                     return self.frame.returnVal
                 self.frame.pc += a
-        
-    def compile(self,textCode: str, safe=True):
+    
+    @classmethod
+    def compile(cls,textCode: str, safe=True):
         # Compiles text code into numerical opcodes
         # DOES NOT COMPILE LINGVA CALCVLI, ONLY COMPILES TEXTUAL REPRESENTATIONS OF MACHINA SIMVLATA OPCODE
         # Sections of the code are separated by '#### #### #### ####'
@@ -632,10 +687,10 @@ class stack_machine():
         # All numbers should be in hexadecimal, and should be broken up into bytes of exactly two digits
         textTup = textCode.split('#### #### #### ####')
 
-        preheap = textTup[0].strip().split('\n')
+        preheap = textTup[0].strip().split('\n---- ----\n')
         heap = []
         for ele in preheap:
-            preObj = ele.split()
+            preObj = re.split('[ \n]',ele)
             width = int(preObj[0],base=16) #size of each element in bits
             byteWidth = width//8
             signed = bool(int(preObj[1],16))
@@ -660,7 +715,7 @@ class stack_machine():
             ele = sele.split()
             bele1 = [int(x,16) for x in ele[1:]]
             if not len(ele[0]) == 2:
-                symbol = (self.ref_dict[ele[0]],bytesToInt(*bele1,signed=False))
+                symbol = (cls.ref_dict[ele[0]],bytesToInt(*bele1,signed=False))
             else:
                 symbol = (int(ele[0],base=16),bytesToInt(*bele1,signed=False))
             symbols.append(symbol)
@@ -676,12 +731,68 @@ class stack_machine():
         precode = re.split('[ ,\n]',preText)
         if safe:
             precode = [x for x in precode if len(x) > 0]
-        code = [int(x,base=16) if len(x) == 2 else self.command_dict[x] for x in precode]
+        code = [int(x,base=16) if len(x) == 2 else cls.command_dict[x] for x in precode]
         return (heap,symbols,vars,code)
     
+    def __str__(self):
+
+        symbolstr = ""
+        cur = None
+        for i in range(len(self.symbols)):
+            if i > 0:
+                symbolstr += '\n'
+            cur = self.symbols[i]
+            symbolstr += "{0}: {1} {2}".format(i,self.decompileRef(cur[0]),cur[1])
+
+        heapstr = ""
+        cur = None
+        for i in range(len(self.heap)):
+            if i > 0:
+                heapstr += '\n'
+            cur = self.heap[i]
+            heapstr += "Object {0}: Width={1} Signed={2}\n".format(i,cur[0],cur[1])
+            for i in range(len(cur[2])):
+                heapstr += '%02X' % cur[2][i]
+                if i == len(cur[2]) - 1:
+                    break
+                if i % 16 == 15:
+                    heapstr += '\n'
+                else:
+                    heapstr += ' '
+        
+        memstr = ""
+        cur = None
+        for i in range(len(self.frame.localVars)):
+            if i > 0:
+                memstr += '\n'
+            memstr += "{0}: {1}".format(i,self.frame.localVars[i])
+        
+        
+
+        outStr = """---------Machina Simvlata Stack Machine---------
+verbose: {0}
+stack: {1}
+symbols:
+{2}
+heap:
+{3}
+---------Current Frame---------
+program counter: {4}
+memory:
+{5}
+instructions:
+{6}
+-------------------------------
+input stream: {7}
+output stream: {8}
+------------------------------------------------""".format(self.verbose,self.stack,symbolstr,heapstr,self.frame.pc,memstr,self.formatInstructions(),self.inStream,self.outStream)
+        return outStr
+    
+
     def __repr__(self):
         #return "stack_machine(\n    stack={0},\n    memory={1},\n    ops={2},\n    pointer={3}\n)".format(self.stack,self.memory,self.formatInstructions(),self.pointer)
-        return "WIP"
+        outstr = "<stack_machine verbose={0} stack={1} symbols={2} heap={3} frames={4} frame={5} inStream={6} outStream={7}>".format(self.verbose,self.stack,self.symbols,self.heap,self.frames,self.frame,self.inStream,self.outStream)
+        return outstr
 
 def pack(codeTuple):
     '''
@@ -867,80 +978,8 @@ def UintToInt(num: int):
 
 
 if __name__ == '__main__':
-    #for testing
-    #a is user input function
-    #Takes two arguments as parameters: a reference to a string representing a prompt, and a reference to a string that the output should be directed to
-    a = '''
-08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
-08 00 00
-#### #### #### ####
-STRING 00 00 00 00
-STRING 00 00 00 01
-#### #### #### ####
-00 00 00 00
-00 00 00 00
-00 00 00 00
-#### #### #### ####
-LREF 00
-ARRLEN
-ISTORE 00
-ILOAD 00
-ILOAD 01
-IFCEQ 00 0F
-LREF 00
-ILOAD 01
-ILARR
-CPRINT
-INC 01 01
-GOTO FF F0
-INPUT
-DUP
-LREF 01
-RSARR
-DUP
-IFEQ 00 12
-PUSH 01
-SUB
-SWAP
-DUP2
-POP
-LREF 01
-MSWAP 03
-SWAP
-ISTARR
-GOTO FF F1
-LREF 01
-'''
     exe = stack_machine(input=sys.stdin,output=sys.stdout)
-    '''
-    dc = exe.compile(g)
-    print(dc[0])
-    for ele in dc[3]:
-        print("{0:02X} ".format(ele),end="")
-    print()
-    exe.initialize(dc[0],dc[1],dc[2],dc[3])
-    exe.execute()
-'''
-    e = '''
-08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F 0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 20 00 00 21
-08 00 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64 0A
-08 00 53 65 63 6F 6E 64 20 73 74 72 69 6E 67 0A
-#### #### #### ####
-FUNC 00 00 00 00
-STRING 00 00 00 01
-STRING 00 00 00 02
-#### #### #### ####
-00 00 00 00
-#### #### #### ####
-LREF 00
-LREF 01
-CALL 01
-LREF 00
-LREF 02
-CALL 01
-PUSH 00
-RETURN
-    '''
+
     ''' 
     ec = exe.compile(e)
     f = open('lcbin/helloWorld3.mcs','wb')
@@ -953,17 +992,100 @@ RETURN
     fe = unpack(fg)
     exe.initialize(fe[0],fe[1],fe[2],fe[3])
     exe.execute()'''
-    ac = exe.compile(a)
+    a = '''
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+ILOAD 00
+ARRLEN
+ISTORE 02
+ILOAD 02
+ILOAD 03
+IFCEQ 00 0F
+ILOAD 00
+ILOAD 03
+ILARR
+CPRINT
+INC 03 01
+GOTO FF F0
+INPUT
+SWAP
+POP
+PUSH 01
+SUB
+DUP
+ILOAD 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+ILOAD 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F0
+ILOAD 01
+RETURN'''
+
+    promptTest = """
+08 00 00 00 22 00 00 22 00 00 22 0C 00 1F 11 02
+0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01
+0A FF F0 2B 2D 01 00 01 03 19 0C 01 2C 19 0D 00
+12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0
+0C 01 21
+---- ----
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F
+0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 0A 18 00 
+00 21
+---- ----
+08 00 50 6C 65 61 73 65 20 65 6E 74 65 72 20 61
+20 73 74 72 69 6E 67 3A 20
+---- ----
+08 00 00
+#### #### #### ####
+FUNC 00 00 00 00
+FUNC 00 00 00 01
+STRING 00 00 00 02
+STRING 00 00 00 03
+#### #### #### ####
+00 00 00 00
+#### #### #### ####
+LREF 00
+LREF 03
+LREF 02
+CALL 02
+LREF 01
+SWAP
+CALL 01
+PUSH 00
+RETURN
+"""
+    '''
+    ac = exe.compile(promptTest)
+    f = open('lcbin/promptTest.mcs','wb')
+    f.write(pack(ac))
+    f.close()
+    '''
+    f = open('lcbin/promptTest.mcs','rb')
+    am = f.read()
+    f.close()
+    ac = unpack(am)
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
     print("INIT")
-    exe.execute(verbose=True)
-    print(exe.stack)
-    print(exe.heap)
-    print(intToFloat(3251109888))
-    print(floatToInt(-25.0))
-    print(intToUint(-3))
-    print(UintToInt(4294967293))
+    exe.execute()
+    print(exe)
 
 
+#00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
 
 
