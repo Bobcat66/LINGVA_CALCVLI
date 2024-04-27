@@ -1081,9 +1081,9 @@ RETURN
     f.close()
     ac = unpack(am)
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
+    print(exe)
     print("INIT")
     exe.execute()
-    print(exe)
 
 
 #00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
