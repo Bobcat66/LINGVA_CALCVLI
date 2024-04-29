@@ -374,3 +374,248 @@ RETURN
     print(UintToInt(4294967293))
     print(stack_machine.compileInstructions(a0))
     print(exe)
+
+
+ROMNUM
+08 00 00
+#### #### #### ####
+STRING 00 00 00 00
+#### #### #### ####
+00 00 2F 5A // Number to be converted
+#### #### #### ####
+NEWOBJ 08 00 03 01
+NEWVAR //Reference string. 2nd var (01)
+RILOAD 00
+IFEQ 00 06
+GOTO 00 24
+PUSH 05 // returns 'NVLLA'
+RILOAD 01 // Reference string
+RSARR
+PUSH 00
+PUSH 4E // N
+ISTARR
+PUSH 01
+PUSH 56 // V
+ISTARR
+PUSH 02
+PUSH 4C // L
+ISTARR
+PUSH 03
+PUSH 4C // L
+ISTARR
+PUSH 04
+PUSH 41 // A
+ISTARR
+RILOAD 01 // Reference string
+RETURN
+
+PUSH 00
+NEWVAR // Creates counter for number of characters. 3rd variable (02)
+PUSH 00
+NEWVAR // Counter for number of divisions
+RILOAD 00
+DUP
+IFNE // Begin while loop 0 -----------------------------------TODO
+
+
+RILOAD 
+00
+WIDE 
+PUSH 
+27 
+10
+MOD
+DUP
+WIDE 
+PUSH 
+0F 
+9F // 3999
+
+IFCLE 
+00 
+0B // Begin if conditional 0. Stack: ... (n % 10000)
+WIDE 
+PUSH 
+03 
+E8
+MOD // Stack ... ((n % 10000) % 1000)
+GOTO 
+00 
+0A // Else
+DUP
+RILOAD 
+00
+SWAP
+SUB // Stack ... (n % 10000) (Var 00 - (n % 10000))
+RISTORE 
+00 // End if conditional 0
+
+RILOAD 
+00
+WIDE 
+PUSH 
+03 
+E8 // 1000
+IDIV
+RISTORE
+00 // Stack: ... temp
+PUSH 
+1B //1B is a special character signifying the beginning of the string
+SWAP
+DUP // Stack: ... 1B temp temp
+WIDE 
+PUSH 
+03 
+E8
+IDIV
+DUP // Stack: ... 1B temp (temp // 1000) (temp // 1000)
+
+IFEQ 
+00 
+0C // Begin while loop 1
+PUSH 
+4D
+SWAP
+PUSH 
+01
+SUB
+GOTO 
+FF 
+F6 // -10 End while loop 1
+
+POP // Stack: ... (M...M) temp
+WIDE 
+PUSH 
+03 
+E8 // 1000
+MOD // Stack: ... (M...M) (temp%1000 a.k.a. temo)
+DUP
+
+WIDE 
+PUSH 
+03 
+84 // 900
+IFCGE 
+00 
+06
+GOTO 
+00 
+0E
+PUSH 
+43 // Stack: ... (M...M) temp C
+SWAP
+PUSH 4D // M
+SWAP
+WIDE PUSH 03 84
+SUB
+DUP
+
+WIDE PUSH 01 F4 // 500
+IFCGE 00 06
+GOTO 00 0B
+PUSH 44
+SWAP
+WIDE PUSH 01 F4
+SUB
+DUP
+
+WIDE PUSH 01 90 // 400
+IFCGE 00 06
+GOTO 00 0E
+PUSH 43 // Stack: ... temp C
+SWAP
+PUSH 44 // D
+SWAP
+WIDE PUSH 01 90
+SUB
+
+WIDE PUSH 00 64
+IDIV
+DUP // Stack: ... temp (temp // 1000) (temp // 1000)
+IFEQ 00 0C // Begin while loop 1
+PUSH 43
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+PUSH 5A // 90
+IFCGE 00 06
+GOTO 00 0C
+PUSH 58 // Stack: ... temp X
+SWAP
+PUSH 43 // D
+SWAP
+PUSH 5A
+SUB
+DUP
+
+PUSH 32 // 50
+IFCGE 00 06
+GOTO 00 09
+PUSH 4C
+SWAP
+PUSH 32
+SUB
+DUP
+
+PUSH 28 // 40
+IFCGE 00 06
+GOTO 00 0C
+PUSH 58 // Stack: ... temp X
+SWAP
+PUSH 4C // L
+SWAP
+PUSH 28
+SUB
+
+PUSH 00 0A
+IDIV
+DUP // Stack: ... temp (temp // 1000) (temp // 1000)
+IFEQ 00 0C // Begin while loop 1
+PUSH 58
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+PUSH 09 // 9
+IFCGE 00 06
+GOTO 00 0C
+PUSH 49 // Stack: ... temp I
+SWAP
+PUSH 58 // X
+SWAP
+PUSH 09
+SUB
+DUP
+
+PUSH 05
+IFCGE 00 06
+GOTO 00 09
+PUSH 56 // V
+SWAP
+PUSH 05
+SUB
+DUP
+
+PUSH 04 //
+IFCGE 00 06
+GOTO 00 0C
+PUSH 49 // Stack: ... temp I
+SWAP
+PUSH 56 // V
+SWAP
+PUSH 04
+SUB
+
+DUP
+IFEQ 00 0C // Begin while loop 1
+PUSH 49
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+POP
+PUSH 7C

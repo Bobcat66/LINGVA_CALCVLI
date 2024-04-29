@@ -7,6 +7,7 @@ import sys
 import io
 import msvcrt
 
+#TODO: Finish romnum function
 @dataclass
 class frame:
     pc: int #program counter for frame
@@ -75,7 +76,7 @@ class stack_machine():
         'EXARR' : 0x34,
         'NEWOBJ' : 0x35,
         'MOD' : 0x36,
-        'IDIV' : 0x37
+        'IDIV' : 0x37,
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -227,18 +228,19 @@ class stack_machine():
             try:
                 off = self.offsetDict[self.frame.opcodes[i]]
                 if off == 'Double':
+                    instructionPosList.add(i)
                     instructionPosList.add(i+1)
-                    a = self.offsetDict[self.frame.opcodes[i]]
-                    i += 2 + 2*a
+                    a = self.offsetDict[self.frame.opcodes[i+1]]
+                    i += (2 + 2*(a-1))
                 elif off == 'Quad':
+                    instructionPosList.add(i)
                     instructionPosList.add(i+1)
-                    a = self.offsetDict[self.frame.opcodes[i]]
-                    i += 2 + 4*a
+                    a = self.offsetDict[self.frame.opcodes[i+1]]
+                    i += (2 + 4*(a-1))
                 else:
                     i += self.offsetDict[self.frame.opcodes[i]]
             except KeyError:
                 i += 1
-        instructions = []
         instructions = [self.decompileOpcode(self.frame.opcodes[i]) if i in instructionPosList else '%02X' % self.frame.opcodes[i] for i in range(len(self.frame.opcodes))]
         iStr = '['
         for i in range(len(instructions)):
@@ -650,9 +652,7 @@ class stack_machine():
                 # Out: ... 
                 arrayRef = self.stack.pop()
                 newSize = self.stack.pop()
-                newLst = []
-                for i in range(newSize):
-                    newLst.append(0)
+                newLst = [0] * newSize
                 self.heap[arrayRef] = (self.heap[arrayRef][0],self.heap[arrayRef][1],newLst)
                 return 1
             case 0x2d:
@@ -701,39 +701,39 @@ class stack_machine():
                 nextOp = self.getFwd(1)
                 match nextOp:
                     case 0x1b:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         self.stack.append(self.symbols[arg1][1])
                     case 0x2f:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         self.stack.append(self.symbols[arg1][1])
                     case 0x30:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         self.stack.append(UintToInt(self.symbols[arg1][1]))
                     case 0x31:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         self.stack.append(intToFloat(self.symbols[arg1][1]))
                     case 0x11:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         a = self.stack.pop()
                         self.frame.localVars[arg1] = a
                     case 0x0c:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         self.stack.append(self.frame.localVars[arg1])
                     case 0x26:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         a = self.stack.pop()
                         a = floatToInt(a)
                         self.frame.localVars[arg1] = a
                     case 0x23:
-                        arg1 = self.getuInt16()
+                        arg1 = self.getuInt16(1)
                         var = self.frame.localVars[arg1]
                         var = intToFloat(var)
                         self.stack.append(var)
                     case 0x00:
-                        arg1 = self.getuInt16() #push value
+                        arg1 = self.getuInt16(1) #push value
                         self.stack.append(arg1)
 
-                params = self.offsetDict(nextOp)
+                params = (self.offsetDict[nextOp]-1)
                 params *= 2
                 return 1 + 1 + params
             case 0x33:
@@ -744,38 +744,38 @@ class stack_machine():
                 nextOp = self.getFwd(1)
                 match nextOp:
                     case 0x1b:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         self.stack.append(self.symbols[arg1][1])
                     case 0x2f:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         self.stack.append(self.symbols[arg1][1])
                     case 0x30:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         self.stack.append(UintToInt(self.symbols[arg1][1]))
                     case 0x31:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         self.stack.append(intToFloat(self.symbols[arg1][1]))
                     case 0x11:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         a = self.stack.pop()
                         self.frame.localVars[arg1] = a
                     case 0x0c:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         self.stack.append(self.frame.localVars[arg1])
                     case 0x26:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         a = self.stack.pop()
                         a = floatToInt(a)
                         self.frame.localVars[arg1] = a
                     case 0x23:
-                        arg1 = self.getuInt32()
+                        arg1 = self.getuInt32(1)
                         var = self.frame.localVars[arg1]
                         var = intToFloat(var)
                         self.stack.append(var)
                     case 0x00:
-                        arg1 = self.getuInt32() #push value
+                        arg1 = self.getuInt32(1) #push value
                         self.stack.append(arg1)
-                params = self.offsetDict(nextOp)
+                params = (self.offsetDict[nextOp])
                 params *= 4
                 return 1 + 1 + params
             case 0x34:
@@ -1187,99 +1187,99 @@ if __name__ == '__main__':
     fe = unpack(fg)
     exe.initialize(fe[0],fe[1],fe[2],fe[3])
     exe.execute()'''
-    #Converting num to string
-#Takes one value, number to be converted
-    b = '''
+
+    romnum = '''
+takes one variable, the integer to be converted to roman numerals
 08 00 00
 #### #### #### ####
 STRING 00 00 00 00
 #### #### #### ####
-00 00 2F 5A // Number to be converted
+00 00 8C F2
 #### #### #### ####
 NEWOBJ 08 00 03 01
 NEWVAR //Reference string. 2nd var (01)
 RILOAD 00
 IFEQ 00 06
-GOTO 00 24
+GOTO 00 2E
 PUSH 05 // returns 'NVLLA'
 RILOAD 01 // Reference string
 RSARR
+PUSH 01
 PUSH 00
 PUSH 4E // N
 ISTARR
 PUSH 01
+PUSH 01
 PUSH 56 // V
 ISTARR
+PUSH 01
 PUSH 02
 PUSH 4C // L
 ISTARR
+PUSH 01
 PUSH 03
 PUSH 4C // L
 ISTARR
+PUSH 01
 PUSH 04
 PUSH 41 // A
 ISTARR
 RILOAD 01 // Reference string
 RETURN
 
-PUSH 00
-NEWVAR // Creates counter for number of characters. 3rd variable (02)
-PUSH 00
-NEWVAR // Counter for number of divisions
+PUSH 1B //1B is a special character signifying the beginning of the string TODO
 RILOAD 00
-DUP
-IFNE // Begin while loop 0 -----------------------------------TODO
 
-
+IFEQ 01 2B // Begin while loop 0 
 RILOAD 00
 WIDE PUSH 27 10
 MOD
-DUP
+DUP // Stack: temp temp
 WIDE PUSH 0F 9F // 3999
 
-IFCLE 00 0B // Begin if conditional 0. Stack: ... (n % 10000)
+IFCLE 00 0B // Begin if conditional 0. Stack: ... temp
 WIDE PUSH 03 E8
-MOD // Stack ... ((n % 10000) % 1000)
+MOD // Stack ... temp % 1000
 GOTO 00 0A // Else
 DUP
 RILOAD 00
 SWAP
-SUB // Stack ... (n % 10000) (Var 00 - (n % 10000))
+SUB // Stack ... temp (Var 00 - (n % 10000))
 RISTORE 00 // End if conditional 0
 
 RILOAD 00
 WIDE PUSH 03 E8 // 1000
 IDIV
 RISTORE 00 // Stack: ... temp
-PUSH 1B //1B is a special character signifying the beginning of the string
-SWAP
-DUP // Stack: ... 1B temp temp
+
+DUP // Stack: ... 0x1B temp temp
 WIDE PUSH 03 E8
 IDIV
-DUP // Stack: ... 1B temp (temp // 1000) (temp // 1000)
+DUP // Stack: ... 0x1B temp (temp // 1000) (temp // 1000)
 
-IFEQ 00 0C // Begin while loop 1
-PUSH 4D
-SWAP
-PUSH 01
-SUB
-GOTO FF F6 // -10 End while loop 1
+IFEQ 00 0E // Begin while loop 1 Stack: ... 0x1B temp (temp // 1000)
+PUSH 4D // Stack: 1 ... 0x1B temp (temp // 1000) 0x4D
+MSWAP 03 // Stack: 1 ... 0x1B 0x4D (temp // 1000) temp
+SWAP // Stack: 1 ... 0x1B 0x4D temp (temp // 1000)
+PUSH 01 // Stack: 1 ... 0x1B 0x4D temp (temp // 1000) 0x01
+SUB // Stack: 1 ... 0x1B 0x4D temp ((temp // 1000)-1)
+GOTO FF F4 // -12 End while loop 1
 
 POP // Stack: ... (M...M) temp
 WIDE PUSH 03 E8 // 1000
-MOD // Stack: ... (M...M) (temp%1000 a.k.a. temo)
-DUP
+MOD // Stack: ... (M...M) (temp % 1000)
+DUP // Stack: ... (M...M) temp temp
 
-WIDE PUSH 03 84 // 900
-IFCGE 00 06
+WIDE PUSH 03 84 // 900 Stack: ... temp temp 900
+IFCGE 00 06 // Stack: ... temp
 GOTO 00 0E
-PUSH 43 // Stack: ... (M...M) temp C
+PUSH 43
 SWAP
-PUSH 4D // M
+PUSH 4D
 SWAP
 WIDE PUSH 03 84
-SUB
-DUP
+SUB // Stack: ... 0x43 0x4D temp-900
+DUP // Stack: ... temp temp
 
 WIDE PUSH 01 F4 // 500
 IFCGE 00 06
@@ -1288,32 +1288,39 @@ PUSH 44
 SWAP
 WIDE PUSH 01 F4
 SUB
-DUP
+DUP // Stack: ... temp temp
 
 WIDE PUSH 01 90 // 400
 IFCGE 00 06
 GOTO 00 0E
-PUSH 43 // Stack: ... temp C
+PUSH 43 // Stack: ... temp 0x43
 SWAP
-PUSH 44 // D
+PUSH 44
 SWAP
 WIDE PUSH 01 90
-SUB
+SUB // Stack: ... 0x43 0x44 (temp-400)
+DUP
 
-WIDE PUSH 00 64
+PUSH 64 // 100
 IDIV
-DUP // Stack: ... temp (temp // 1000) (temp // 1000)
-IFEQ 00 0C // Begin while loop 1
+DUP // Stack: ... temp (temp // 100) (temp // 100)
+IFEQ 00 0E // Begin while loop 1 Stack: ... temp (temp // 100)
 PUSH 43
-SWAP
+MSWAP 03
+SWAP // Stack: 1 ... 0x43 temp (temp // 100)
 PUSH 01
-SUB
-GOTO FF F6 // -10 End while loop 1
+SUB // Stack: 1 ... 0x43 temp ((temp // 100)-1)
+GOTO FF F4 // -12 End while loop 1
 
-PUSH 5A // 90
+POP // Stack: ... temp
+PUSH 64 // 100
+MOD
+DUP // Stack: ... temp temp
+
+PUSH 5A // 90 
 IFCGE 00 06
 GOTO 00 0C
-PUSH 58 // Stack: ... temp X
+PUSH 58 // Stack: ... temp 0x58
 SWAP
 PUSH 43 // D
 SWAP
@@ -1333,22 +1340,29 @@ DUP
 PUSH 28 // 40
 IFCGE 00 06
 GOTO 00 0C
-PUSH 58 // Stack: ... temp X
+PUSH 58 // Stack: ... temp 0x58
 SWAP
 PUSH 4C // L
 SWAP
 PUSH 28
 SUB
+DUP
 
-PUSH 00 0A
+PUSH 0A // 10
 IDIV
-DUP // Stack: ... temp (temp // 1000) (temp // 1000)
-IFEQ 00 0C // Begin while loop 1
+DUP
+IFEQ 00 0E // Begin while loop 1 Stack: ... temp (temp // 10)
 PUSH 58
+MSWAP 03 // Stack: 1 ... 58 (temp // 10) temp
 SWAP
 PUSH 01
-SUB
-GOTO FF F6 // -10 End while loop 1
+SUB // Stack: 1 ... 58 temp ((temp // 10)-1)
+GOTO FF F4 // -12 End while loop 1
+
+POP // Stack: ... temp
+PUSH 0A // 10
+MOD
+DUP // Stack: ... temp temp
 
 PUSH 09 // 9
 IFCGE 00 06
@@ -1379,59 +1393,105 @@ PUSH 56 // V
 SWAP
 PUSH 04
 SUB
+DUP // Stack: ... temp temp
 
-DUP
-IFEQ 00 0C // Begin while loop 1
-PUSH 49
+IFEQ 00 0C // Begin while loop 1 Stack: ... temp
+PUSH 49 // Stack: 1 ... temp 0x49
 SWAP
 PUSH 01
-SUB
-GOTO FF F6 // -10 End while loop 1
-'''
-    a = '''
-PUSH
-00
-NEWVAR
-PUSH
-00
-NEWVAR
-PUSH
-00
-NEWVAR
-RILOAD 00
-ARRLEN
-RISTORE 02
-RILOAD 02
-RILOAD 03
-IFCEQ 00 0F
-RILOAD 00
-RILOAD 03
-ILARR
-CPRINT
-INC 03 01
-GOTO FF F0
-INPUT
-SWAP
+SUB // Stack: 1 ... 0x49 temp-1
+GOTO FF F6 // -12 End while loop 1
+
 POP
-PUSH 01
-SUB
-DUP
-RILOAD 01
-RSARR
-DUP
-IFEQ 00 12
-PUSH 01
-SUB
-SWAP
-DUP2
+PUSH 7C
+GOTO FE D6
+
 POP
-RILOAD 01
-MSWAP 03
+PUSH 00
+NEWVAR //Counter for space in string. 3rd var (02)
+RILOAD 01 // output string Stack: ... (lastEle) ref
+SWAP
+RILOAD 02 
 SWAP
 ISTARR
-GOTO FF F0
+INC 02 01
+
+DUP // Stack: (eles) (lastEle) (lastEle)
+PUSH 1B // Stack: (eles) (lastEle) (lastEle) 0x1B
+IFCEQ 00 15 // Stack: (eles) (lastEle)
+PUSH 01 
 RILOAD 01
-RETURN'''
+EXARR //Extends array
+RILOAD 01 
+SWAP 
+RILOAD 02 
+SWAP 
+ISTARR // Adds elements
+INC 02 01
+GOTO FF EB
+RILOAD 01
+RETURN
+'''
+    newTest = '''
+08 00 35 08 00 03 01 22 0C 00 0D 00 06 0A 00 2E // Romnum func. Unfortunately is backwards
+00 05 0C 01 2C 00 01 00 00 00 4E 1E 00 01 00 01 
+00 56 1E 00 01 00 02 00 4C 1E 00 01 00 03 00 4C 
+1E 00 01 00 04 00 41 1E 0C 01 21 00 1B 0C 00 0D 
+01 2B 0C 00 32 00 27 10 36 19 32 00 0F 9F 17 00 
+0B 32 00 03 E8 36 0A 00 0A 19 0C 00 2D 03 11 00 
+0C 00 32 00 03 E8 37 11 00 19 32 00 03 E8 37 19 
+0D 00 0E 00 4D 2E 03 2D 00 01 03 0A FF F4 01 32 
+00 03 E8 36 19 32 00 03 84 16 00 06 0A 00 0E 00 
+43 2D 00 4D 2D 32 00 03 84 03 19 32 00 01 F4 16 
+00 06 0A 00 0B 00 44 2D 32 00 01 F4 03 19 32 00 
+01 90 16 00 06 0A 00 0E 00 43 2D 00 44 2D 32 00 
+01 90 03 19 00 64 37 19 0D 00 0E 00 43 2E 03 2D 
+00 01 03 0A FF F4 01 00 64 36 19 00 5A 16 00 06 
+0A 00 0C 00 58 2D 00 43 2D 00 5A 03 19 00 32 16 
+00 06 0A 00 09 00 4C 2D 00 32 03 19 00 28 16 00 
+06 0A 00 0C 00 58 2D 00 4C 2D 00 28 03 19 00 0A 
+37 19 0D 00 0E 00 58 2E 03 2D 00 01 03 0A FF F4 
+01 00 0A 36 19 00 09 16 00 06 0A 00 0C 00 49 2D 
+00 58 2D 00 09 03 19 00 05 16 00 06 0A 00 09 00 
+56 2D 00 05 03 19 00 04 16 00 06 0A 00 0C 00 49 
+2D 00 56 2D 00 04 03 19 0D 00 0C 00 49 2D 00 01 
+03 0A FF F6 01 00 7C 0A FE D6 01 00 00 22 0C 01 
+2D 0C 02 2D 1E 0B 02 01 19 00 1B 12 00 15 00 01 
+0C 01 34 0C 01 2D 0C 02 2D 1E 0B 02 01 0A FF EB 
+0C 01 21
+---- ----
+08 00 35 08 00 03 01 22 00 00 22 00 00 22 00 00 // prompt func
+22 0C 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 
+03 1D 18 0B 03 01 0A FF F0 2B 2D 01 00 01 03 19 
+0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 
+03 2D 1E 0A FF F0 0C 01 21
+---- ----
+08 00 0C 00 1F 22 00 00 22 0C 01 0C 02 12 00 0F // printl func
+0C 00 0C 02 1D 18 0B 02 01 0A FF F0 00 0A 18 00
+00 21
+---- ----
+08 00 45 6E 74 65 72 20 74 65 78 74 20 68 65 72 65 3A 20
+#### #### #### ####
+FUNC 00 00 00 00
+FUNC 00 00 00 01
+FUNC 00 00 00 02
+STRING 00 00 00 03
+#### #### #### ####
+00 00 4B 9C
+#### #### #### ####
+LREF 01 //prompt
+LREF 03 //String constant
+CALL 01
+LREF 02 //printl
+SWAP
+CALL 01
+LREF 00
+RILOAD 00
+CALL 01
+LREF 02 //printl
+SWAP
+CALL 01
+'''
 
     promptTest = """
 08 00 00 00 22 00 00 22 00 00 22 0C 00 1F 11 02
@@ -1453,6 +1513,7 @@ FUNC 00 00 00 00
 FUNC 00 00 00 01
 STRING 00 00 00 02
 STRING 00 00 00 03
+FUNC 00 00 00 04
 #### #### #### ####
 00 00 00 00
 #### #### #### ####
@@ -1472,16 +1533,17 @@ RETURN
     f.write(pack(ac))
     f.close()
     '''
-    f = open('lcbin/promptTest.mcs','rb')
-    am = f.read()
-    f.close()
-    print("UNPACK")
-    unpack(am)
-    ac = exe.compile(promptTest)
+    #f = open('lcbin/promptTest.mcs','rb')
+    #am = f.read()
+    #f.close()
+    #print("UNPACK")
+    #unpack(am)
+    ac = exe.compile(newTest)
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
-    print(exe)
+    #print(exe)
     print("INIT")
     exe.execute()
+    #print(exe)
 
     newprompt = '''
 NEWOBJ 08 00 03 01
@@ -1530,8 +1592,3 @@ GOTO FF F0
 RILOAD 01
 RETURN
 '''
-h = exe.compileInstructions(newprompt)
-print(h)
-#00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
-
-
