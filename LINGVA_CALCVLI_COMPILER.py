@@ -1,6 +1,7 @@
 from LINGVA_CALCVLI_PARSER import parser
 
 class compiler():
+
     def __init__(self) -> None:
         self.parser = parser
             

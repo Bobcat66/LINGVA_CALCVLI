@@ -1,8 +1,10 @@
-import msvcrt
 
-a = msvcrt.getch()
-b = msvcrt.getche()
+
+
 print('hello world')
+print(1 + 2)
+print(3)
+b = 4
 a = input("hello ")
 def foo(x):
     print(x)

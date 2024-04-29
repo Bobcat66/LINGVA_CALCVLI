@@ -190,12 +190,19 @@ def p_return_statement(p):
 def p_call_function_expr(p):
     '''expression : CALL_FUNCTION expression expression_list END_ARGUMENTS
                   | CALL_FUNCTION expression NO_ARGUMENTS'''
-    p[0] = ('CALL_FUNCTION',p[2],p[3])
+    if p[3] == "NVLLVM_ARGVMENTVM":
+        p[0] = ('CALL_FUNCTION',p[2],None)
+    else:
+        p[0] = ('CALL_FUNCTION',p[2],p[3])
 
 def p_call_function_stmt(p):
     '''statement : CALL_FUNCTION_STATEMENT expression expression_list END_ARGUMENTS
                  | CALL_FUNCTION_STATEMENT expression NO_ARGUMENTS'''
-    p[0] = ('$CALL_FUNCTION',p[2],p[3])
+    if p[3] == "NVLLVM_ARGVMENTVM":
+        p[0] = ('$CALL_FUNCTION',p[2],None)
+    else:
+        p[0] = ('$CALL_FUNCTION',p[2],p[3])
+
 
 def p_expression_list(p):
     'expression_list : BEGIN_ARGUMENTS expression'
@@ -327,6 +334,6 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM"""
     ('$DECLARE_FUNCTION', (('@TYPE', 'STRING'), ('@ID', 'FVNCTION_DOS'), None), [
         ('$RETURN', ('@STRING', 'HELLO WORLD'))
     ]), 
-    ('$PRINT', ('CALL_FUNCTION', ('@ID', 'FVNCTION_DOS'), 'NVLLVM_ARGVMENTVM')), 
+    ('$PRINT', ('CALL_FUNCTION', ('@ID', 'FVNCTION_DOS'), None)), 
     ('$RETURN', ('@STRING', 'HELLO WORLD'))]), 
  ('$CALL_FUNCTION', ('@ID', 'FVNCTION_VNVS'), [('@NUMBER', 3), ('@STRING', 'HELLO')])]

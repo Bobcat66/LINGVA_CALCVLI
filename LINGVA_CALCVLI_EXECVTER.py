@@ -201,10 +201,11 @@ class executer():
             case "CALL_FUNCTION":
                 funcName = expr[1][1]
                 params = []
-                for rawParam in expr[2]:
-                    #these assign the parameters values
-                    param = self.simplifyExpr(rawParam)
-                    params.append(param)
+                if expr[2] is not None:
+                    for rawParam in expr[2]:
+                        #these assign the parameters values
+                        param = self.simplifyExpr(rawParam)
+                        params.append(param)
                 func: FunctionExecuter = self.funcs[funcName]
                 return func.execute(params,verbose=False)
 
@@ -398,10 +399,12 @@ class executer():
             case "$CALL_FUNCTION":
                 funcName = statement[1][1]
                 params = []
-                for rawParam in statement[2]:
-                    #these assign the parameters values
-                    param = self.simplifyExpr(rawParam)
-                    params.append(param)
+                if statement[2] is not None:
+                    for rawParam in statement[2]:
+                        #these assign the parameters values
+                        param = self.simplifyExpr(rawParam)
+                        params.append(param)
+                else: params = None
                 func: FunctionExecuter = self.funcs[funcName]
                 return func.execute_as_statement(params,verbose=verbose)
 

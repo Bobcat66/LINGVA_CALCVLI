@@ -47,10 +47,10 @@ class stack_machine():
         'CPRINT' : 0x18, #Prints top element of stack
         'DUP' : 0x19, #Duplicates last element of stack
         'DUP2' : 0x1a, #Duplicates last element of stack twice
-        'LREF' : 0x1b, #Load ref from Symbol table
-        'WLREF' : 0x1c,  #Load ref from Symbol table (wide) #TODO
-        'ILARR' : 0x1d, #Load int from array #TODO
-        'ISTARR' : 0x1e, #Store int in array #TODO
+        'LREF' : 0x1b, #Load ref from Symbol table. Can be widened
+        'WLREF' : 0x1c,  #Load ref from Symbol table (wide) 
+        'ILARR' : 0x1d, #Load int from array 
+        'ISTARR' : 0x1e, #Store int in array 
         'ARRLEN' : 0x1f, #get array length
         'CALL' : 0x20, #calls function based on reference from top of the stack
         'RETURN' : 0x21, #pops top element of stack and returns it
@@ -66,7 +66,12 @@ class stack_machine():
         'INPUT' : 0x2b, #Reads line from input stream and appends it to stack sequentially
         'RSARR' : 0x2c, #Resizes array. Takes two parameters: the array length and the width of each element
         'SWAP' : 0x2d, #Swaps topmost element and second topmost element on stack
-        'MSWAP' : 0x2e
+        'MSWAP' : 0x2e,
+        'LICONST' : 0x2f, #Loads global integer constant from symbol table. Can be widened
+        'LSCONST' : 0x30, #Loads global signed integer constant from symbol table. Can be widened
+        'LFCONST' : 0x31, #Loads global float constant from symbol table. Can be widened
+        'WIDE' : 0x32, #Modifies next opcode to take double the normal number of params #TODO WIP
+        'YOURMOM' : 0x33, #Modifies next opcode to take quadruple the normal number of params #TODO WIP
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -90,7 +95,12 @@ class stack_machine():
         0x20 : 2,
         0x23 : 2,
         0x26 : 2,
-        0x2e : 2
+        0x2e : 2,
+        0x2f : 2,
+        0x30 : 2,
+        0x31 : 2,
+        0x32 : 'Double',
+        0x33 : 'Quad'
     }
 
     type_dict = {
@@ -104,7 +114,7 @@ class stack_machine():
 
     ref_dict = {
         #Reference types
-        'VAR' : 0x01,
+        'VAR' : 0x01, #Global Variable
         'FUNC' : 0x02,
         'STRING' : 0x03,
         'IARR' : 0x04, #Int array
@@ -113,6 +123,7 @@ class stack_machine():
         'RARR' : 0x07, #Ref array
         'STRUCT' : 0x08, #WIP, to be implemented when Structs are added
         'SIARR' : 0x09, #Signed int array
+        'CONST' : 0x0a, #Global constant
     }
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
@@ -173,6 +184,14 @@ class stack_machine():
         arg2 = self.getFwd(offset+2)
         return ((arg1 << 8) | arg2) #converts two bytes into unsigned 16 bit integer
     
+    def getuInt32(self,offset=0):
+        #retrieves next four elements after the offset from pointer in instruction list and combines them into unsigned 32 bit integer
+        arg1 = self.getFwd(offset+1)
+        arg2 = self.getFwd(offset+2)
+        arg3 = self.getFwd(offset+3)
+        arg4 = self.getFwd(offset+4)
+        return ((arg1 << 24) | (arg2 << 16) | (arg3 << 8) | arg4) #converts two bytes into unsigned 32 bit integer
+    
     def decompileOpcode(self,opcode):
         #Decompiles individual opcode
         key_list = list(self.command_dict.keys())
@@ -201,7 +220,17 @@ class stack_machine():
         while i < len(self.frame.opcodes):
             instructionPosList.add(i)
             try:
-                i += self.offsetDict[self.frame.opcodes[i]]
+                off = self.offsetDict[self.frame.opcodes[i]]
+                if off == 'Double':
+                    instructionPosList.add(i+1)
+                    a = self.offsetDict[self.frame.opcodes[i]]
+                    i += 2 + 2*a
+                elif off == 'Quad':
+                    instructionPosList.add(i+1)
+                    a = self.offsetDict[self.frame.opcodes[i]]
+                    i += 2 + 4*a
+                else:
+                    i += self.offsetDict[self.frame.opcodes[i]]
             except KeyError:
                 i += 1
         instructions = []
@@ -473,7 +502,7 @@ class stack_machine():
                 #WLREF
                 #Loads reference from symbol table (WIDE)
                 #takes one 2-byte parameter, the index of the reference in the symbol table
-                arg1 = self.getInt16()
+                arg1 = self.getuInt16()
                 self.stack.append(self.symbols[arg1][1])
                 return 1 + 2
             case 0x1d:
@@ -634,6 +663,73 @@ class stack_machine():
                 self.stack[pos] = self.stack.pop()
                 self.stack.append(a)
                 return 1 + 1
+            case 0x2f:
+                #LICONST
+                #Loads integer constant from symbol table
+                #takes one 1-byte parameter, the index of the constant in the symbol table
+                arg1 = self.getFwd(1)
+                self.stack.append(self.symbols[arg1][1])
+                return 1 + 1
+            case 0x30:
+                #LSCONST
+                #Loads signed integer constant from symbol table
+                #Takes one 1-byte parameter, the index of the constant in the symbol table
+                arg1 = self.getFwd(1)
+                self.stack.append(UintToInt(self.symbols[arg1][1]))
+                return 1 + 1
+            case 0x31:
+                #FLCONST
+                #Loads float constant from symbol table
+                #Takes one 1-byte parameter, the index of the constant in the symbol table
+                arg1 = self.getFwd(1)
+                self.stack.append(intToFloat(self.symbols[arg1][1]))
+                return 1 + 1
+            case 0x32:
+                #WIDE
+                #Widens next operation
+                #Takes one 1-byte parameter, the next operation
+                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b 
+                nextOp = self.getFwd(1)
+                match nextOp:
+                    case 0x1b:
+                        arg1 = self.getuInt16()
+                        self.stack.append(self.symbols[arg1][1])
+                    case 0x2f:
+                        arg1 = self.getuInt16()
+                        self.stack.append(self.symbols[arg1][1])
+                    case 0x30:
+                        arg1 = self.getuInt16()
+                        self.stack.append(UintToInt(self.symbols[arg1][1]))
+                    case 0x31:
+                        arg1 = self.getuInt16()
+                        self.stack.append(intToFloat(self.symbols[arg1][1]))
+                params = self.offsetDict(nextOp)
+                params *= 2
+                return 1 + 1 + params
+            case 0x33:
+                #YOURMOM
+                #Double Widens next operation
+                #Takes one 1-byte parameter, the next operation
+                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b 
+                nextOp = self.getFwd(1)
+                match nextOp:
+                    case 0x1b:
+                        arg1 = self.getuInt32()
+                        self.stack.append(self.symbols[arg1][1])
+                    case 0x2f:
+                        arg1 = self.getuInt32()
+                        self.stack.append(self.symbols[arg1][1])
+                    case 0x30:
+                        arg1 = self.getuInt32()
+                        self.stack.append(UintToInt(self.symbols[arg1][1]))
+                    case 0x31:
+                        arg1 = self.getuInt32()
+                        self.stack.append(intToFloat(self.symbols[arg1][1]))
+                params = self.offsetDict(nextOp)
+                params *= 4
+                return 1 + 1 + params
+
+
 
     def initialize(self,heap,symbols,vars,code):
         self.frames = []
