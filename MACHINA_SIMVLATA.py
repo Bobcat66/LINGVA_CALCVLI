@@ -32,12 +32,12 @@ class stack_machine():
         'BNOT' : 0x09,
         'GOTO' : 0x0a,
         'INC' : 0x0b, #Increment variable
-        'ILOAD' : 0x0c, #Load int from local variable
+        'RILOAD' : 0x0c, #Load int or reference from local variable
         'IFEQ' : 0x0d, 
         'IFNE' : 0x0e,
         'WINC' : 0x0f,
         'NOP' : 0x10,
-        'ISTORE' : 0x11, #Stores int in variable
+        'RISTORE' : 0x11, #Stores int in variable
         'IFCEQ' : 0x12, #Equality comparison between two values
         'IFCNE' : 0x13, #Notequal
         'IFCGR' : 0x14, #Greater
@@ -71,7 +71,11 @@ class stack_machine():
         'LSCONST' : 0x30, #Loads global signed integer constant from symbol table. Can be widened
         'LFCONST' : 0x31, #Loads global float constant from symbol table. Can be widened
         'WIDE' : 0x32, #Modifies next opcode to take double the normal number of params #TODO WIP
-        'YOURMOM' : 0x33, #Modifies next opcode to take quadruple the normal number of params #TODO WIP
+        'YOUR_MOTHER' : 0x33, #Modifies next opcode to take quadruple the normal number of params #TODO WIP
+        'EXARR' : 0x34,
+        'NEWOBJ' : 0x35,
+        'MOD' : 0x36,
+        'IDIV' : 0x37
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -100,7 +104,8 @@ class stack_machine():
         0x30 : 2,
         0x31 : 2,
         0x32 : 'Double',
-        0x33 : 'Quad'
+        0x33 : 'Quad',
+        0x35 : 5,
     }
 
     type_dict = {
@@ -251,9 +256,15 @@ class stack_machine():
         return ['%02X' % ele for ele in inlist]
     
     @classmethod
-    def compileInstructions(cls, codetext):
+    def compileInstructions(cls, codetext: str):
         #Compiles MS code into string of hexadecimal integers. Useful for working directly with MS code
-        precode = re.split('[ ,\n]',codetext)
+        code1 = codetext.split('\n')
+        uncommentedCode = ""
+        for line in code1:
+            #Removes comments
+            lineSplit = line.split('//')
+            uncommentedCode += (lineSplit[0] + '\n')
+        precode = re.split('[ ,\n]',uncommentedCode)
         precode = [x for x in precode if len(x) > 0]
         code = [int(x,base=16) if len(x) == 2 else cls.command_dict[x] for x in precode]
         outStr = ""
@@ -353,7 +364,7 @@ class stack_machine():
                 self.frame.localVars[arg1] = a
                 return 1 + 2
             case 0x0c:
-                #LOAD
+                #RILOAD
                 #Load local variable into operand stack.
                 #takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
@@ -394,7 +405,7 @@ class stack_machine():
                 #No operation
                 return 1
             case 0x11:
-                #ISTORE
+                #RISTORE
                 #Pops top element of stack, and stores it at index in memory
                 #Takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
@@ -573,8 +584,6 @@ class stack_machine():
             case 0x24:
                 #FLARR
                 #Load float from array
-                #LARR
-                #Load element of array
                 index = self.stack.pop()
                 arrayref = self.stack.pop()
                 num = self.heap[arrayref][2][index]
@@ -595,7 +604,7 @@ class stack_machine():
                 #Takes one one-byte parameter, the variable index
                 arg1 = self.getFwd(1)
                 a = self.stack.pop()
-                a = floatToInt(1)
+                a = floatToInt(a)
                 self.frame.localVars[arg1] = a
                 return 1 + 1
             case 0x27:
@@ -688,7 +697,7 @@ class stack_machine():
                 #WIDE
                 #Widens next operation
                 #Takes one 1-byte parameter, the next operation
-                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b 
+                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b, 0x11, 0x0c, 0x26, 0x23, 0x00
                 nextOp = self.getFwd(1)
                 match nextOp:
                     case 0x1b:
@@ -703,14 +712,35 @@ class stack_machine():
                     case 0x31:
                         arg1 = self.getuInt16()
                         self.stack.append(intToFloat(self.symbols[arg1][1]))
+                    case 0x11:
+                        arg1 = self.getuInt16()
+                        a = self.stack.pop()
+                        self.frame.localVars[arg1] = a
+                    case 0x0c:
+                        arg1 = self.getuInt16()
+                        self.stack.append(self.frame.localVars[arg1])
+                    case 0x26:
+                        arg1 = self.getuInt16()
+                        a = self.stack.pop()
+                        a = floatToInt(a)
+                        self.frame.localVars[arg1] = a
+                    case 0x23:
+                        arg1 = self.getuInt16()
+                        var = self.frame.localVars[arg1]
+                        var = intToFloat(var)
+                        self.stack.append(var)
+                    case 0x00:
+                        arg1 = self.getuInt16() #push value
+                        self.stack.append(arg1)
+
                 params = self.offsetDict(nextOp)
                 params *= 2
                 return 1 + 1 + params
             case 0x33:
-                #YOURMOM
+                #YOUR_MOTHER
                 #Double Widens next operation
                 #Takes one 1-byte parameter, the next operation
-                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b 
+                #Ops that can be widened: 0x31, 0x30, 0x2f, 0x1b, 0x11, 0x0c, 0x26, 0x23, 0x00
                 nextOp = self.getFwd(1)
                 match nextOp:
                     case 0x1b:
@@ -725,10 +755,72 @@ class stack_machine():
                     case 0x31:
                         arg1 = self.getuInt32()
                         self.stack.append(intToFloat(self.symbols[arg1][1]))
+                    case 0x11:
+                        arg1 = self.getuInt32()
+                        a = self.stack.pop()
+                        self.frame.localVars[arg1] = a
+                    case 0x0c:
+                        arg1 = self.getuInt32()
+                        self.stack.append(self.frame.localVars[arg1])
+                    case 0x26:
+                        arg1 = self.getuInt32()
+                        a = self.stack.pop()
+                        a = floatToInt(a)
+                        self.frame.localVars[arg1] = a
+                    case 0x23:
+                        arg1 = self.getuInt32()
+                        var = self.frame.localVars[arg1]
+                        var = intToFloat(var)
+                        self.stack.append(var)
+                    case 0x00:
+                        arg1 = self.getuInt32() #push value
+                        self.stack.append(arg1)
                 params = self.offsetDict(nextOp)
                 params *= 4
                 return 1 + 1 + params
+            case 0x34:
+                #EXARR
+                #Extends array
+                # ... val aRef
+                # ...
+                ref = self.stack.pop()
+                val = self.stack.pop()
+                for i in range(val):
+                    self.heap[ref][2].append(0) 
+                return 1
+            case 0x35:
+                #NEWOBJ
+                #Creates new object in heap
+                #Also creates symbol in symbol stack
+                #Pushes reference to object to stack
+                #Takes four 1-byte parameters: obj width, obj signed, object type, initial size
+                objWidth = self.getFwd(1)
+                objSigned = bool(self.getFwd(2))
+                objType = self.getFwd(3)
+                objSize = self.getFwd(4)
+                newObj = (objWidth,objSigned,[0]*objSize)
+                pos = len(self.heap)
+                self.heap.append(newObj)
+                self.symbols.append((objType,pos))
+                self.stack.append(pos)
+                return 1 + 4
+            case 0x36:
+                #MOD
+                #Modulo operator
+                a = self.stack.pop()
+                b = self.stack.pop()
+                self.stack.append(b % a)
+                return 1
+            case 0x37:
+                #IDIV
+                #Integer division operator
+                a = self.stack.pop()
+                b = self.stack.pop()
+                self.stack.append(b // a)
+                return 1
 
+
+                
 
 
     def initialize(self,heap,symbols,vars,code):
@@ -781,7 +873,14 @@ class stack_machine():
         # Compiler only supports simple numerical variables right now
         # Safe catches errors, but slows down compilation
         # All numbers should be in hexadecimal, and should be broken up into bytes of exactly two digits
-        textTup = textCode.split('#### #### #### ####')
+        # '//' comments out everything after it on the line
+        code1 = textCode.split('\n')
+        uncommentedCode = ""
+        for line in code1:
+            #Removes comments
+            lineSplit = line.split('//')
+            uncommentedCode += (lineSplit[0] + '\n')
+        textTup = uncommentedCode.split('#### #### #### ####')
 
         preheap = textTup[0].strip().split('\n---- ----\n')
         heap = []
@@ -1088,6 +1187,207 @@ if __name__ == '__main__':
     fe = unpack(fg)
     exe.initialize(fe[0],fe[1],fe[2],fe[3])
     exe.execute()'''
+    #Converting num to string
+#Takes one value, number to be converted
+    b = '''
+08 00 00
+#### #### #### ####
+STRING 00 00 00 00
+#### #### #### ####
+00 00 2F 5A // Number to be converted
+#### #### #### ####
+NEWOBJ 08 00 03 01
+NEWVAR //Reference string. 2nd var (01)
+RILOAD 00
+IFEQ 00 06
+GOTO 00 24
+PUSH 05 // returns 'NVLLA'
+RILOAD 01 // Reference string
+RSARR
+PUSH 00
+PUSH 4E // N
+ISTARR
+PUSH 01
+PUSH 56 // V
+ISTARR
+PUSH 02
+PUSH 4C // L
+ISTARR
+PUSH 03
+PUSH 4C // L
+ISTARR
+PUSH 04
+PUSH 41 // A
+ISTARR
+RILOAD 01 // Reference string
+RETURN
+
+PUSH 00
+NEWVAR // Creates counter for number of characters. 3rd variable (02)
+PUSH 00
+NEWVAR // Counter for number of divisions
+RILOAD 00
+DUP
+IFNE // Begin while loop 0 -----------------------------------TODO
+
+
+RILOAD 00
+WIDE PUSH 27 10
+MOD
+DUP
+WIDE PUSH 0F 9F // 3999
+
+IFCLE 00 0B // Begin if conditional 0. Stack: ... (n % 10000)
+WIDE PUSH 03 E8
+MOD // Stack ... ((n % 10000) % 1000)
+GOTO 00 0A // Else
+DUP
+RILOAD 00
+SWAP
+SUB // Stack ... (n % 10000) (Var 00 - (n % 10000))
+RISTORE 00 // End if conditional 0
+
+RILOAD 00
+WIDE PUSH 03 E8 // 1000
+IDIV
+RISTORE 00 // Stack: ... temp
+PUSH 1B //1B is a special character signifying the beginning of the string
+SWAP
+DUP // Stack: ... 1B temp temp
+WIDE PUSH 03 E8
+IDIV
+DUP // Stack: ... 1B temp (temp // 1000) (temp // 1000)
+
+IFEQ 00 0C // Begin while loop 1
+PUSH 4D
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+POP // Stack: ... (M...M) temp
+WIDE PUSH 03 E8 // 1000
+MOD // Stack: ... (M...M) (temp%1000 a.k.a. temo)
+DUP
+
+WIDE PUSH 03 84 // 900
+IFCGE 00 06
+GOTO 00 0E
+PUSH 43 // Stack: ... (M...M) temp C
+SWAP
+PUSH 4D // M
+SWAP
+WIDE PUSH 03 84
+SUB
+DUP
+
+WIDE PUSH 01 F4 // 500
+IFCGE 00 06
+GOTO 00 0B
+PUSH 44
+SWAP
+WIDE PUSH 01 F4
+SUB
+DUP
+
+WIDE PUSH 01 90 // 400
+IFCGE 00 06
+GOTO 00 0E
+PUSH 43 // Stack: ... temp C
+SWAP
+PUSH 44 // D
+SWAP
+WIDE PUSH 01 90
+SUB
+
+WIDE PUSH 00 64
+IDIV
+DUP // Stack: ... temp (temp // 1000) (temp // 1000)
+IFEQ 00 0C // Begin while loop 1
+PUSH 43
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+PUSH 5A // 90
+IFCGE 00 06
+GOTO 00 0C
+PUSH 58 // Stack: ... temp X
+SWAP
+PUSH 43 // D
+SWAP
+PUSH 5A
+SUB
+DUP
+
+PUSH 32 // 50
+IFCGE 00 06
+GOTO 00 09
+PUSH 4C
+SWAP
+PUSH 32
+SUB
+DUP
+
+PUSH 28 // 40
+IFCGE 00 06
+GOTO 00 0C
+PUSH 58 // Stack: ... temp X
+SWAP
+PUSH 4C // L
+SWAP
+PUSH 28
+SUB
+
+PUSH 00 0A
+IDIV
+DUP // Stack: ... temp (temp // 1000) (temp // 1000)
+IFEQ 00 0C // Begin while loop 1
+PUSH 58
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+
+PUSH 09 // 9
+IFCGE 00 06
+GOTO 00 0C
+PUSH 49 // Stack: ... temp I
+SWAP
+PUSH 58 // X
+SWAP
+PUSH 09
+SUB
+DUP
+
+PUSH 05
+IFCGE 00 06
+GOTO 00 09
+PUSH 56 // V
+SWAP
+PUSH 05
+SUB
+DUP
+
+PUSH 04 //
+IFCGE 00 06
+GOTO 00 0C
+PUSH 49 // Stack: ... temp I
+SWAP
+PUSH 56 // V
+SWAP
+PUSH 04
+SUB
+
+DUP
+IFEQ 00 0C // Begin while loop 1
+PUSH 49
+SWAP
+PUSH 01
+SUB
+GOTO FF F6 // -10 End while loop 1
+'''
     a = '''
 PUSH
 00
@@ -1098,14 +1398,14 @@ NEWVAR
 PUSH
 00
 NEWVAR
-ILOAD 00
+RILOAD 00
 ARRLEN
-ISTORE 02
-ILOAD 02
-ILOAD 03
+RISTORE 02
+RILOAD 02
+RILOAD 03
 IFCEQ 00 0F
-ILOAD 00
-ILOAD 03
+RILOAD 00
+RILOAD 03
 ILARR
 CPRINT
 INC 03 01
@@ -1116,7 +1416,7 @@ POP
 PUSH 01
 SUB
 DUP
-ILOAD 01
+RILOAD 01
 RSARR
 DUP
 IFEQ 00 12
@@ -1125,12 +1425,12 @@ SUB
 SWAP
 DUP2
 POP
-ILOAD 01
+RILOAD 01
 MSWAP 03
 SWAP
 ISTARR
 GOTO FF F0
-ILOAD 01
+RILOAD 01
 RETURN'''
 
     promptTest = """
@@ -1158,8 +1458,8 @@ STRING 00 00 00 03
 #### #### #### ####
 LREF 00
 LREF 03
-LREF 02
-CALL 02
+LREF 02 //testing comments
+CALL 02 //compiler won't read this
 LREF 01
 SWAP
 CALL 01
@@ -1175,13 +1475,63 @@ RETURN
     f = open('lcbin/promptTest.mcs','rb')
     am = f.read()
     f.close()
-    ac = unpack(am)
+    print("UNPACK")
+    unpack(am)
+    ac = exe.compile(promptTest)
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
     print(exe)
     print("INIT")
     exe.execute()
 
-
+    newprompt = '''
+NEWOBJ 08 00 03 01
+NEWVAR //Var 01
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+PUSH
+00
+NEWVAR
+RILOAD 00
+ARRLEN
+RISTORE 02
+RILOAD 02
+RILOAD 03
+IFCEQ 00 0F
+RILOAD 00
+RILOAD 03
+ILARR
+CPRINT
+INC 03 01
+GOTO FF F0
+INPUT
+SWAP
+POP
+PUSH 01
+SUB
+DUP
+RILOAD 01
+RSARR
+DUP
+IFEQ 00 12
+PUSH 01
+SUB
+SWAP
+DUP2
+POP
+RILOAD 01
+MSWAP 03
+SWAP
+ISTARR
+GOTO FF F0
+RILOAD 01
+RETURN
+'''
+h = exe.compileInstructions(newprompt)
+print(h)
 #00 00 22 00 00 22 00 00 22 1B 00 1F 11 02 0C 02 0C 03 12 00 0F 0C 00 0C 03 1D 18 0B 03 01 0A FF F0 2B 19 0C 01 2C 19 0D 00 12 00 01 03 2D 1A 01 0C 01 2E 03 2D 1E 0A FF F0 0C 01 21
 
 
