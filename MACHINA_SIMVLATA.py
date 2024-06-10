@@ -5,6 +5,7 @@ import copy
 import math
 import sys
 import io
+import NVMERVS_ROMANVS as romNum
 import msvcrt
 
 #TODO: Finish romnum function
@@ -77,6 +78,13 @@ class stack_machine():
         'NEWOBJ' : 0x35,
         'MOD' : 0x36,
         'IDIV' : 0x37,
+        'FRONT' : 0x38, #Brings element in stack to front. takes one parameter, the position in the stack to move to the front
+        'SFRONT' : 0x39,
+        'BACK' : 0x3a, #Pushes top of stack back a certain number of spaces. takes one parameter, the position in the stack to push to. 1 = push to top of stack
+        'SBACK' : 0x3b, #Pushes top of stack back a certain number of spaces. parameter is in stack. 1 = push to second to top of stack (top is the parameter)
+        'ITOSTR' : 0x3c,
+        'STRTOI' : 0x3d,
+        'NEWOBJS' : 0x3e
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -107,10 +115,12 @@ class stack_machine():
         0x32 : 'Double',
         0x33 : 'Quad',
         0x35 : 5,
+        0x38 : 2,
     }
 
     type_dict = {
         #Fundamental Variable types
+        #TODO
         'BYTE' : 0x00,
         'SHORT' : 0x01,
         'INT' : 0x02,
@@ -120,16 +130,18 @@ class stack_machine():
 
     ref_dict = {
         #Reference types
-        'VAR' : 0x01, #Global Variable
-        'FUNC' : 0x02,
-        'STRING' : 0x03,
-        'IARR' : 0x04, #Int array
-        'LARR' : 0x05, #Long array
-        'FARR' : 0x06, #Float array
-        'RARR' : 0x07, #Ref array
+        'VAR' : 0x01, #Global Variable, Not used
+        'FUNC' : 0x02, #Bytecode, 8 bits
+        'STRING' : 0x03, #String, 8 bits
+        'IARR' : 0x04, #Int array, 32 bits 
+        'LARR' : 0x05, #Long array, 64 bits
+        'FARR' : 0x06, #Float array, 32 bits
+        'RARR' : 0x07, #Ref array, 32 bits
         'STRUCT' : 0x08, #WIP, to be implemented when Structs are added
         'SIARR' : 0x09, #Signed int array
         'CONST' : 0x0a, #Global constant
+        'SLARR' : 0x0b, #Signed Long array 
+        'BARR' : 0x0c, #Byte array, 8 bits
     }
 
     #Parameters are loaded into the instruction stack after their instruction. for example, the instruction stack for PUSH 5 would be [0x00,0x05]
@@ -818,6 +830,69 @@ class stack_machine():
                 b = self.stack.pop()
                 self.stack.append(b // a)
                 return 1
+            case 0x38:
+                #FRONT
+                #Moves element to front
+                #Takes one argument, the position in te stack to move to the front. 1= the element at the top of the stack
+                arg1 = self.getFwd(1)
+                a = self.stack.pop(-arg1)
+                self.stack.append(a)
+                return 1 + 1
+            case 0x39:
+                #SFRONT
+                #Moves element to front, but takes parameter from the stack itself. 1 = the element second highest in the stack (the highest element in the stack is the parameter itself)
+                b = self.stack.pop()
+                a = self.stack.pop(-b)
+                self.stack.append(a)
+                return 1
+            case 0x3a:
+                # BACK
+                # Moves top element back in stack. Takes one parameter, the number of spaces to move back 1 = move to second to top
+                arg1 = self.getFwd(1)
+                a = self.stack.pop()
+                self.stack.insert(-arg1,a)
+                return 1 + 1
+            case 0x3b:
+                # SBACK
+                # Moves second to top element back in stack. Top element is parameter.
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.insert(b,a)
+                return 1
+            case 0x3c:
+                #ITOSTR
+                #Converts top element of stack to roman numeral, puts result on stack sequentially, and puts length of number
+                num = self.stack.pop()
+                outStr = romNum.to_RomNum(num)
+                lenNum = len(outStr)
+                for ele in outStr:
+                    self.stack.append(ord(ele))
+                self.stack.append(lenNum)
+                return 1
+            case 0x3d:
+                #STRTOI
+                #Converts top x elements to a string, then converts that string from a roman numeral to a decimal number. The topmost element is the number of elements to convert
+                strLen = self.stack.pop()
+                outStr = ""
+                for ele in range(strLen):
+                    char = chr(self.stack.pop())
+                    outStr.append(char)
+                outNum = romNum.to_decimal(outStr)
+                self.stack.append(outNum)
+                return 1
+            case 0x3e:
+                #NEWOBJS
+                #Stack-based NEWOBJ command
+                objWidth = self.stack.pop()
+                objSigned = bool(self.stack.pop())
+                objType = self.stack.pop()
+                objSize = self.stack.pop()
+                newObj = (objWidth,objSigned,[0]*objSize)
+                pos = len(self.heap)
+                self.heap.append(newObj)
+                self.symbols.append((objType,pos))
+                self.stack.append(pos)
+
 
 
                 
@@ -1098,7 +1173,7 @@ def unpack(bytecode):
 def intToBytes(num,size=32):
     #Converts int32s into 4 bytes
     if num < 0:
-        num += (1 << 32) 
+        num += (1 << size) 
     bytes = []
     for i in range(size//8):
         byte = (num % (1 << size-(8*i))) >> (size - 8 * (i+1))
@@ -1189,15 +1264,17 @@ if __name__ == '__main__':
     exe.execute()'''
 
     romnum = '''
-takes one variable, the integer to be converted to roman numerals
+// takes one variable, the integer to be converted to roman numerals
 08 00 00
 #### #### #### ####
 STRING 00 00 00 00
 #### #### #### ####
-00 00 8C F2
+00 04 02 D2
 #### #### #### ####
 NEWOBJ 08 00 03 01
 NEWVAR //Reference string. 2nd var (01)
+PUSH 00
+NEWVAR //Variable character counter for romnum into string. 3rd var (02)
 RILOAD 00
 IFEQ 00 06
 GOTO 00 2E
@@ -1407,31 +1484,141 @@ PUSH 7C
 GOTO FE D6
 
 POP
-PUSH 00
-NEWVAR //Counter for space in string. 3rd var (02)
-RILOAD 01 // output string Stack: ... (lastEle) ref
-SWAP
-RILOAD 02 
-SWAP
+PUSH 02 // Initializes counter, Beginning of outloop, #0
+DUP // Stack: (elems) counter counter
+SFRONT // Stack: (elems) counter (SeqElem) SeqElem stands for sequenced elem
+DUP
+DUP
+PUSH 1B //Checks for end of string
+IFCEQ 00 35 // If end of string, go to #3
+
+PUSH 7C // Stack: (elems) counter (SeqElem) (SeqElem) 7C
+IFCEQ 00 0A // GOTO #1 IF TRUE
+
+SWAP // Stack: (elems) (SeqElem) counter
+PUSH 01
+ADD // Stack: (elems) (seqElems) counter
+GOTO FF EE
+
+SWAP // #1 Stack: (elems) 7C counter
+DUP // Stack: (elems) 7C counter counter
+RILOAD 01
+EXARR
+SBACK
+
+DUP //Begin if loop
+PUSH 7C
+IFCEQ 00 10
+RILOAD 02
+RILOAD 01 //Stack: (elems) Element Index Arref
+MSWAP 03
 ISTARR
 INC 02 01
+GOTO FF F0
 
-DUP // Stack: (eles) (lastEle) (lastEle)
-PUSH 1B // Stack: (eles) (lastEle) (lastEle) 0x1B
-IFCEQ 00 15 // Stack: (eles) (lastEle)
-PUSH 01 
-RILOAD 01
-EXARR //Extends array
-RILOAD 01 
-SWAP 
-RILOAD 02 
-SWAP 
-ISTARR // Adds elements
+RILOAD 02
+RILOAD 01 //Stack: (elems) Element Index Arref
+MSWAP 03
+ISTARR
 INC 02 01
-GOTO FF EB
+GOTO FF C6
+
+POP // #3
+POP
+PUSH 02
+SUB
+DUP
+RILOAD 01
+EXARR
+DUP
+IFEQ 00 15//begin if loop. Stack: (seqElems) counter. Goto #5
+
+SWAP
+RILOAD 02
+RILOAD 01
+MSWAP 03
+ISTARR
+INC 02 01
+PUSH 01
+SUB
+DUP
+GOTO FF EE
+
 RILOAD 01
 RETURN
 '''
+
+    romnumFunc = '''
+08 00 00
+#### #### #### ####
+STRING 00 00 00 00
+#### #### #### ####
+00 00 8F FC
+00 00 00 00
+#### #### #### ####
+//Var0 is the number to be converted to romnum
+//Var1 is the reference to the string
+RILOAD 00
+ITOSTR
+DUP
+RILOAD 01
+RSARR
+PUSH 01
+SUB
+
+DUP //Beginning of if loop. Stack before: (elems) counter | stack after: (elems) counter counter
+IFEQ 00 12
+SWAP
+DUP2
+POP //Stack: (elems) counter counter elem
+SWAP
+RILOAD 01
+MSWAP 03
+ISTARR
+PUSH 01
+SUB
+GOTO FF F0
+
+RILOAD 01
+MSWAP 03
+ISTARR
+RILOAD 01
+RETURN
+'''
+
+    rfunc = '''
+//Var0 is the number to be converted to romnum
+//Var1 is the reference to the string
+RILOAD 00
+ITOSTR
+DUP
+RILOAD 01
+RSARR
+PUSH 01
+SUB
+
+DUP //Beginning of if loop. Stack before: (elems) counter | stack after: (elems) counter counter
+IFEQ 00 12
+SWAP
+DUP2
+POP //Stack: (elems) counter counter elem
+SWAP
+RILOAD 01
+MSWAP 03
+ISTARR
+PUSH 01
+SUB
+GOTO FF F0
+
+RILOAD 01
+MSWAP 03
+ISTARR
+RILOAD 01
+RETURN'''
+
+#IDEAS: Add section counter and char counter
+#Length of each section will be listed in the stack
+#Likely computationally intensive
     newTest = '''
 08 00 35 08 00 03 01 22 0C 00 0D 00 06 0A 00 2E // Romnum func. Unfortunately is backwards
 00 05 0C 01 2C 00 01 00 00 00 4E 1E 00 01 00 01 
@@ -1538,12 +1725,14 @@ RETURN
     #f.close()
     #print("UNPACK")
     #unpack(am)
-    ac = exe.compile(newTest)
+    ac = exe.compile(romnumFunc)
+    print(exe.compileInstructions(rfunc))
+    print(ac[3])
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
     #print(exe)
     print("INIT")
     exe.execute()
-    #print(exe)
+    print(exe)
 
     newprompt = '''
 NEWOBJ 08 00 03 01

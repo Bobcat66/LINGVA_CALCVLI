@@ -156,8 +156,8 @@ def decimal_inner(n):
     return out
 
 if __name__ == "__main__":
-    print(to_RomNum(19356))
-    print(to_decimal('MCCXXXIV|DLXVII|DCCCXC'))
+    print(to_RomNum(36860))
+    print(to_decimal('MCCXXIX||XVXXCCC'))
 
 
     

@@ -11,55 +11,32 @@ import MACHINA_SIMVLATA as mcs
 class compiler():
     standard_lib = {
         'printl' : [0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,0X0C,0X00,
-                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X0A,0X18,0X00,0X00,0X21],
+                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X0A,0X18,0X00,0X00,0X21], #0
 
         'print' :  [0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,0X0C,0X00,
-                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X00,0X21],
+                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X00,0X21], #1
 
         'prompt' : [0X00,0X00,0X22,0X00,0X00,0X22,0X00,0X00,0X22,0X0C,0X00,0X1F,0X11,0X02,0X0C,0X02,
                     0X0C,0X03,0X12,0X00,0X0F,0X0C,0X00,0X0C,0X03,0X1D,0X18,0X0B,0X03,0X01,0X0A,0XFF,
                     0XF0,0X2B,0X2D,0X01,0X00,0X01,0X03,0X19,0X0C,0X01,0X2C,0X19,0X0D,0X00,0X12,0X00,
-                    0X01,0X03,0X2D,0X1A,0X01,0X0C,0X01,0X2E,0X03,0X2D,0X1E,0X0A,0XFF,0XF0,0X0C,0X01,
+                    0X01,0X03,0X2D,0X1A,0X01,0X0C,0X01,0X2E,0X03,0X2D,0X1E,0X0A,0XFF,0XF0,0X0C,0X01, #2
                     0X21],
 
-        'toRomnum':[0X35,0X08,0X00,0X03,0X01,0X22,0X0C,0X00,0X0D,0X00,0X06,0X0A,0X00,0X2E,0X00,0X05,
-                    0X0C,0X01,0X2C,0X00,0X01,0X00,0X00,0X00,0X4E,0X1E,0X00,0X01,0X00,0X01,0X00,0X56,
-                    0X1E,0X00,0X01,0X00,0X02,0X00,0X4C,0X1E,0X00,0X01,0X00,0X03,0X00,0X4C,0X1E,0X00,
-                    0X01,0X00,0X04,0X00,0X41,0X1E,0X0C,0X01,0X21,0X00,0X1B,0X0C,0X00,0X0D,0X01,0X2B,
-                    0X0C,0X00,0X32,0X00,0X27,0X10,0X36,0X19,0X32,0X00,0X0F,0X9F,0X17,0X00,0X0B,0X32,
-                    0X00,0X03,0XE8,0X36,0X0A,0X00,0X0A,0X19,0X0C,0X00,0X2D,0X03,0X11,0X00,0X0C,0X00,
-                    0X32,0X00,0X03,0XE8,0X37,0X11,0X00,0X19,0X32,0X00,0X03,0XE8,0X37,0X19,0X0D,0X00,
-                    0X0E,0X00,0X4D,0X2E,0X03,0X2D,0X00,0X01,0X03,0X0A,0XFF,0XF4,0X01,0X32,0X00,0X03,
-                    0XE8,0X36,0X19,0X32,0X00,0X03,0X84,0X16,0X00,0X06,0X0A,0X00,0X0E,0X00,0X43,0X2D,
-                    0X00,0X4D,0X2D,0X32,0X00,0X03,0X84,0X03,0X19,0X32,0X00,0X01,0XF4,0X16,0X00,0X06,
-                    0X0A,0X00,0X0B,0X00,0X44,0X2D,0X32,0X00,0X01,0XF4,0X03,0X19,0X32,0X00,0X01,0X90,
-                    0X16,0X00,0X06,0X0A,0X00,0X0E,0X00,0X43,0X2D,0X00,0X44,0X2D,0X32,0X00,0X01,0X90,
-                    0X03,0X19,0X00,0X64,0X37,0X19,0X0D,0X00,0X0E,0X00,0X43,0X2E,0X03,0X2D,0X00,0X01,
-                    0X03,0X0A,0XFF,0XF4,0X01,0X00,0X64,0X36,0X19,0X00,0X5A,0X16,0X00,0X06,0X0A,0X00,
-                    0X0C,0X00,0X58,0X2D,0X00,0X43,0X2D,0X00,0X5A,0X03,0X19,0X00,0X32,0X16,0X00,0X06,
-                    0X0A,0X00,0X09,0X00,0X4C,0X2D,0X00,0X32,0X03,0X19,0X00,0X28,0X16,0X00,0X06,0X0A,
-                    0X00,0X0C,0X00,0X58,0X2D,0X00,0X4C,0X2D,0X00,0X28,0X03,0X19,0X00,0X0A,0X37,0X19,
-                    0X0D,0X00,0X0E,0X00,0X58,0X2E,0X03,0X2D,0X00,0X01,0X03,0X0A,0XFF,0XF4,0X01,0X00,
-                    0X0A,0X36,0X19,0X00,0X09,0X16,0X00,0X06,0X0A,0X00,0X0C,0X00,0X49,0X2D,0X00,0X58,
-                    0X2D,0X00,0X09,0X03,0X19,0X00,0X05,0X16,0X00,0X06,0X0A,0X00,0X09,0X00,0X56,0X2D,
-                    0X00,0X05,0X03,0X19,0X00,0X04,0X16,0X00,0X06,0X0A,0X00,0X0C,0X00,0X49,0X2D,0X00,
-                    0X56,0X2D,0X00,0X04,0X03,0X19,0X0D,0X00,0X0C,0X00,0X49,0X2D,0X00,0X01,0X03,0X0A,
-                    0XFF,0XF6,0X01,0X00,0X7C,0X0A,0XFE,0XD6,0X01,0X00,0X00,0X22,0X0C,0X01,0X2D,0X0C,
-                    0X02,0X2D,0X1E,0X0B,0X02,0X01,0X19,0X00,0X1B,0X12,0X00,0X15,0X00,0X01,0X0C,0X01,
-                    0X34,0X0C,0X01,0X2D,0X0C,0X02,0X2D,0X1E,0X0B,0X02,0X01,0X0A,0XFF,0XEB,0X0C,0X01,
-                    0X21,]
+      'toRomnum' : [0X0C,0X00,0X3C,0X19,0X0C,0X01,0X2C,0X00,0X01,0X03,0X19,0X0D,0X00,0X12,0X2D,0X1A,
+                    0X01,0X2D,0X0C,0X01,0X2E,0X03,0X1E,0X00,0X01,0X03,0X0A,0XFF,0XF0,0X0C,0X01,0X2E,
+                    0X03,0X1E,0X0C,0X01,0X21] #3
     }
     def __init__(self):
         self.AST = []
         self.terminals = {
             #Lists all terminal expressions in the code
-            'STRING' : [],
-            'TYPE' : [],
-            'NUMBER' : [],
-            'BOOLEAN' : [],
-            'RATIO' : [],
-            'ID' : [],
-            'PROMPT' : [] #TODO: FIX PROMPTS
+            #The items in this are immutable
+            'STRING' : set(), #ALSO CONTAINS PROMPT STRINGS
+            'TYPE' : set(),
+            'NUMBER' : set(),
+            'BOOLEAN' : set(),
+            'RATIO' : set(),
+            'ID' : set(),
         }
         
         self.funcs = {} #List of functions to process
@@ -68,11 +45,11 @@ class compiler():
         self.localVars = { #Localvars for each scope
             'MAIN' : [],
         }
-        self.heap = [[32,0,0]] #First element in heap is a temporary array, for use in intermediate operations
-        self.symbols = [('IARR',i)]
+        self.heap = []
+        self.symbols = []
         self.lvars = []
         self.code = []
-        i = 1
+        i = 0
         for func in self.standard_lib.values():
             self.heap.append(func)
             self.symbols.append(('FUNC',i))
@@ -90,7 +67,7 @@ class compiler():
         #Each value in the dict of format SCOPE: (INDEX,TYPE), where INDEX is the position within the local variables. 
         #NOTE: localAliases are only for values stored in local variables. Also, localAliases stores all localAliases for all scopes
         #Alias dicts are for converting human readable ids into positions in the symbol table/local table
-        self.constAliases = {}#For constants within the symbol table
+        self.constAliases = {}#For constants within the symbol table. Same format as localAliases
     
     def compile(self,AST):
         self.AST = AST
@@ -155,9 +132,8 @@ class compiler():
         self.localVars[scope].append[obj]
         return pos
 
-
     def __compileSymbols(self):
-        #Compiles symbol table. Should be done at the very end
+        #Compiles symbol table. Should be done at the very end. TODO: remove placeholder symbols
         newSymbols = [(mcs.stack_machine.ref_dict[ele[0]],ele[1]) for ele in self.symbols]
         self.symbols = newSymbols
 
@@ -171,7 +147,7 @@ class compiler():
             return
             
         if obj[0][0] == '@':
-            self.terminals[obj[0][1:]].append(obj[1])
+            self.terminals[obj[0][1:]].add(obj[1])
             return
         else:
             for ele2 in obj[1:]:
@@ -198,10 +174,17 @@ class compiler():
             strList = [8,0] + [ord(char) for char in ele]
             pos = self.__addHeap(strList,'STRING')
             self.constAliases[ele] = pos
-        
+
     def __compileExpr(self,expr,scope='MAIN'):
         #Compiles Expr. The code should resolve so that the value of the expression is at the top of the stack
-        pass
+        name = expr[0]
+        code = []
+        match name:
+            case '@STRING':
+                strRef = self.constAliases[expr[1]]
+                code += [0x1b,strRef]
+                #TODO: Add wide modifier
+        return code
 
     def __compileStmt(self,stmt,scope='MAIN'):
         #compiles a statement into code. Returns the code sequence for each statement
@@ -233,9 +216,8 @@ class compiler():
                 RISTORE <ALIAS> //stores reference into variable
                 """
                 id = stmt[1][1]
-                val = stmt[2][1]
+                val = self.__compileExpr(stmt[2])
                 type = stmt[2][0][1:]
-                valCode = self.__compileExpr(val)
                 alias = self.localAliases[id][scope] #(pos,type)
                 if type != alias[1]:
                     #TODO: Raise error of some kind
@@ -252,9 +234,84 @@ class compiler():
                 else:
                     code.append(0x11)
                 code += self.processUInt(alias[0])
-                return valCode + code
+                return val + code
             case "$PRINT":
+                code = [0x1b,0x01]
+                code += self.__compileExpr(stmt[1])
+                code += [0x20,0x01]
+                return code
+            case "$INCREMENT":
+                varName = stmt[1][1]
+                varCode = self.localAliases[varName][scope] #(pos,type)
+                if varCode[0] > 255:
+                    code = [0x0f] + list(mcs.intToBytes(varCode[0],size=16)) + [0x00,0x01]
+                else:
+                    code = [0x0b,varCode[0],0x01]
+                return code
+            case "$DECREMENT":
+                varName = stmt[1][1]
+                varCode = self.localAliases[varName][scope] #(pos,type)
+                code = [0x0f] + list(mcs.intToBytes(varCode[0],size=16)) + [0xff,0xff]
+                return code
+            case "$DECLARE_ARR":
+                #TODO: Fix, add variable obj size
+                arrName = stmt[1][1]
+                arrSize = self.__compileExpr(stmt[2],scope)
+                arrType = stmt[3][1]
+                pos = self.__addHeap(None,'ARRAY')
+                self.globalAliases[arrName][scope] = pos
+                typeCode = 0x00
+                size = 32
+                match arrType:
+                    case 'STRING':
+                        typeCode = 0x07
+                        size=8
+                    case 'NUMBER':
+                        typeCode = 0x04
+                        size=32
+                    case 'RATIO':
+                        typeCode = 0x06
+                        size=32
+                    case 'BOOLEAN':
+                        typeCode = 0x0c
+                        size=8
+                return arrSize + [0x00,typeCode,0x00,0x00,0x00,size,0x3e]
+            case "$EDIT_ARR":
+                #TODO: Add wide support, fix
+                arrName = self.__compileExpr(stmt[1],scope)
+                arrIndex = self.__compileExpr(stmt[2],scope)
+                arrVal = self.__compileExpr(stmt[3],scope)
+                code = []
+                arrCode = self.globalAliases[arrName][scope]
+                if isinstance(arrVal,int):
+                    code = [0x1e,arrCode,arrIndex,arrVal]
+                elif isinstance(arrVal,float):
+                    code = [arrCode,arrIndex,arrVal]
+                return code
+            case "$ASSIGN_ARR":
+                #TODO: FINISH
+                oldArr = stmt[1][1]
+                newArr = stmt[2][1]
+                newCode = self.globalAliases[newArr][scope]
+                self.globalAliases[oldArr][scope] = newCode
                 pass
+            case "DELETE_ELE":
+                #TODO: FINISH
+                arrName = stmt[1][1]
+                arrIndexCode = self.__compileExpr(stmt[2])
+                arrCode = self.globalAliases(arrName,scope)
+                pass
+            case "$APPEND":
+                arrName = stmt[1][1]
+                arrCode = self.globalAliases(arrName,scope)
+                newEle = self.__compileExpr(stmt[2])
+                return [0x00,0x01,0x00,arrCode,0x34,0x00,arrCode,0x19,0x1f,0x00,0x01,0x03] + newEle
+                pass
+
+    
+    def __processTermSymbols(self):
+        #processes terminals and adds them to symbols
+        pass
 
     @staticmethod
     def processUInt(n):
@@ -303,17 +360,18 @@ FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
 
 ap = parser.parse(b)
-print(ap)
+#print(ap)
 compier = compiler()
 compier.compile(ap)
-print(compier.terminals)
-print(compier.symbols)
-print(compier.globalAliases)
-print(compier.constAliases)
-i = 0
+print('terminals:',compier.terminals)
+print()
+print('symbols:',compier.symbols)
+print()
+print('globalAliases:',compier.globalAliases)
+print()
+print('constAliases:',compier.constAliases)
+print()
 for ele in compier.heap:
     print(ele)
-    #print(compier.symbols[i])
-    i += 1
-
-print(compier.processUInt(6554634))
+print(compier.symbols)
+#print(compier.processUInt(6554634))
