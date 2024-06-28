@@ -24,7 +24,14 @@ class compiler():
 
       'toRomnum' : [0X0C,0X00,0X3C,0X19,0X0C,0X01,0X2C,0X00,0X01,0X03,0X19,0X0D,0X00,0X12,0X2D,0X1A,
                     0X01,0X2D,0X0C,0X01,0X2E,0X03,0X1E,0X00,0X01,0X03,0X0A,0XFF,0XF0,0X0C,0X01,0X2E,
-                    0X03,0X1E,0X0C,0X01,0X21] #3
+                    0X03,0X1E,0X0C,0X01,0X21], #3
+
+       'promptn' : [0x08,0x00,0x35,0x08,0x00,0x03,0x01,0x22,0x00,0x00,0x22,0x00,0x00,0x22,0x00,0x00, 
+                    0x22,0x0C,0x00,0x1F,0x11,0x02,0x0C,0x02,0x0C,0x03,0x12,0x00,0x0F,0x0C,0x00,0x0C, 
+                    0x03,0x1D,0x18,0x0B,0x03,0x01,0x0A,0xFF,0xF0,0x2B,0x2D,0x01,0x00,0x01,0x03,0x19, 
+                    0x0C,0x01,0x2C,0x19,0x0D,0x00,0x12,0x00,0x01,0x03,0x2D,0x1A,0x01,0x0C,0x01,0x2E, 
+                    0x03,0x2D,0x1E,0x0A,0xFF,0xF0,0x0C,0x01,0x21], #4
+      
     }
     def __init__(self):
         self.AST = []
@@ -184,6 +191,39 @@ class compiler():
                 strRef = self.constAliases[expr[1]]
                 code += [0x1b,strRef]
                 #TODO: Add wide modifier
+            case '@BOOLEAN':
+                bool = expr[1]
+                if bool:
+                    code = [0x00,0x01]
+                else:
+                    code = [0x00,0x00]
+            case '@NUMBER':
+                num = expr[1]
+                if num > 65535:
+                    code = [0x33,0x00] + list(mcs.intToBytes(num))
+                elif num > 65535:
+                    code = [0x32,0x00] + list(mcs.intToBytes(num,size=16))
+                else:
+                    code = [0x00,num]
+            case '@RATIO':
+                num = expr[1]
+                bytes = list(mcs.intToBytes(mcs.floatToInt(num)))
+                code = [0x33,0x00] + bytes
+            case '@PROMPT':
+                promptCode = self.__compileExpr(expr[1])
+                code = [0x0c,0x04] +  promptCode + [0x20,0x01]
+            case '@ID':
+                #TODO: Add wide support
+                idName = expr[1]
+                if idName in self.globalAliases.keys() and idName in self.localAliases.keys():
+                    #TODO: raise compiler error here
+                    return "ERROR"
+                elif idName in self.globalAliases.keys():
+                    code = [0x00,self.globalAliases[idName][scope][0]]
+                elif idName in self.localAliases.keys():
+                    #TODO: Add float support
+                    code = [0x00,self.localAliases[idName][scope][0],0x0c]
+            
         return code
 
     def __compileStmt(self,stmt,scope='MAIN'):
@@ -204,6 +244,7 @@ class compiler():
                 self.localAliases[id][scope] = (pos,type) #Type is LINGVA_CALCVLI type
                 return [0x00,0x00,0x22]
             case "$ASSIGN_VAR":
+                #TODO: FIX
                 """
                 for floats
                 <VAL CODE>
@@ -215,6 +256,7 @@ class compiler():
                 <VAL CODE>
                 RISTORE <ALIAS> //stores reference into variable
                 """
+
                 id = stmt[1][1]
                 val = self.__compileExpr(stmt[2])
                 type = stmt[2][0][1:]
@@ -222,7 +264,6 @@ class compiler():
                 if type != alias[1]:
                     #TODO: Raise error of some kind
                     pass
-                self.localVars[scope][alias[0]] = val
                 code = []
                 if alias[0] >= (1 << 16):
                     code.append(0x33)
@@ -301,12 +342,12 @@ class compiler():
                 arrIndexCode = self.__compileExpr(stmt[2])
                 arrCode = self.globalAliases(arrName,scope)
                 pass
-            case "$APPEND":
+            case "APPEND":
+                #TODO: Add support for ints and refs
                 arrName = stmt[1][1]
                 arrCode = self.globalAliases(arrName,scope)
                 newEle = self.__compileExpr(stmt[2])
-                return [0x00,0x01,0x00,arrCode,0x34,0x00,arrCode,0x19,0x1f,0x00,0x01,0x03] + newEle
-                pass
+                return [0x00,0x01,0x00,arrCode,0x34,0x00,arrCode,0x19,0x1f,0x00,0x01,0x03] + newEle + [0x1e]
 
     
     def __processTermSymbols(self):

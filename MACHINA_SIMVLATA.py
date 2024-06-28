@@ -1725,7 +1725,7 @@ RETURN
     #f.close()
     #print("UNPACK")
     #unpack(am)
-    ac = exe.compile(romnumFunc)
+    ac = exe.compile(promptTest)
     print(exe.compileInstructions(rfunc))
     print(ac[3])
     exe.initialize(ac[0],ac[1],ac[2],ac[3])

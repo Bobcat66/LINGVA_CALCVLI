@@ -103,14 +103,11 @@ hexcode:
 prompt
 takes two arguments: a reference to a prompt string and a reference to an output string
 Strips newline at the end
-PUSH
-00
+PUSH 00
 NEWVAR
-PUSH
-00
+PUSH 00
 NEWVAR
-PUSH
-00
+PUSH 00
 NEWVAR
 RILOAD 00
 ARRLEN
