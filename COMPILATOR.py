@@ -223,6 +223,63 @@ class compiler():
                 elif idName in self.localAliases.keys():
                     #TODO: Add float support
                     code = [0x00,self.localAliases[idName][scope][0],0x0c]
+
+            #Binary Arithmetic Operators
+            case 'ADD':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x02]
+            case 'SUBTRACT':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x03]
+            case 'MULTIPLY':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x04]
+            case 'DIVIDE':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x05]
+            
+            #Boolean Operators
+            case 'AND':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x06]
+            case 'OR':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x07]
+            case 'XOR':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x08]
+            case 'NOT':
+                op1 = self.__compileExpr(expr[1])
+                code = op1 + [0x09]
+            
+            #Comparators
+            case 'EQUALS':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x3f]
+            case 'GREATER':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x41]
+            case 'LESSER':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x42]
+            case 'GREATER_OR_EQUAL':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x43]
+            case 'LESSER_OR_EQUAL':
+                op1 = self.__compileExpr(expr[1])
+                op2 = self.__compileExpr(expr[2])
+                code = op1 + op2 + [0x44]
             
         return code
 

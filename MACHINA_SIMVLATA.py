@@ -84,7 +84,13 @@ class stack_machine():
         'SBACK' : 0x3b, #Pushes top of stack back a certain number of spaces. parameter is in stack. 1 = push to second to top of stack (top is the parameter)
         'ITOSTR' : 0x3c,
         'STRTOI' : 0x3d,
-        'NEWOBJS' : 0x3e
+        'NEWOBJS' : 0x3e,
+        'EQL' : 0x3f,
+        'NEQL' : 0x40,
+        'GTR' : 0x41,
+        'LSR' : 0x42,
+        'GEQ' : 0x43,
+        'LEQ' : 0x44
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -883,6 +889,7 @@ class stack_machine():
             case 0x3e:
                 #NEWOBJS
                 #Stack-based NEWOBJ command
+                #TODO: verify that returning 1 is necessary
                 objWidth = self.stack.pop()
                 objSigned = bool(self.stack.pop())
                 objType = self.stack.pop()
@@ -892,6 +899,57 @@ class stack_machine():
                 self.heap.append(newObj)
                 self.symbols.append((objType,pos))
                 self.stack.append(pos)
+                return 1
+            case 0x3f:
+                #EQL
+                #Equality operator. Unlike IFEQ, EQL does not shift, and simply appends the boolean result to stack
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a == b else 0)
+                return 1
+            case 0x40:
+                #NEQL
+                #Non-Equality operator. Unlike IFNE, NEQL does not shift, and simply appends the boolean result to stack
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a == b else 0)
+                return 1
+            case 0x41:
+                #GTR
+                #Greater than operator. Does not shift
+                # ... a b
+                # ... (a > b)
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a > b else 0)
+                return 1
+            case 0x42:
+                #LSR
+                #Lesser than operator. Does not shift
+                # ... a b
+                # ... (a < b)
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a < b else 0)
+                return 1
+            case 0x43:
+                #GEQ
+                #Greater than or equal to operator. Does not shift
+                # ... a b
+                # ... (a >= b)
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a >= b else 0)
+                return 1
+            case 0x44:
+                #LEQ
+                #Lesser than or equal to operator. Does not shift
+                # ... a b
+                # ... (a <= b)
+                b = self.stack.pop()
+                a = self.stack.pop()
+                self.stack.append(1 if a <= b else 0)
+                return 1
 
 
 
