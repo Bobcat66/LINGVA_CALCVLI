@@ -10,23 +10,24 @@ import MACHINA_SIMVLATA as mcs
 #TODO: FIX LISTS
 class compiler():
     standard_lib = {
-        'printl' : [0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,0X0C,0X00,
-                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X0A,0X18,0X00,0X00,0X21], #0
+        'printl' : [0X08,0X00,0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,
+                    0X0C,0X00,0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X0A,0X18,0X00,
+                    0X00,0X21], #0
 
-        'print' :  [0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,0X0C,0X00,
-                    0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X00,0X21], #1
+        'print' :  [0X08,0X00,0X0C,0X00,0X1F,0X22,0X00,0X00,0X22,0X0C,0X01,0X0C,0X02,0X12,0X00,0X0F,
+                    0X0C,0X00,0X0C,0X02,0X1D,0X18,0X0B,0X02,0X01,0X0A,0XFF,0XF0,0X00,0X00,0X21], #1
 
-        'prompt' : [0X00,0X00,0X22,0X00,0X00,0X22,0X00,0X00,0X22,0X0C,0X00,0X1F,0X11,0X02,0X0C,0X02,
-                    0X0C,0X03,0X12,0X00,0X0F,0X0C,0X00,0X0C,0X03,0X1D,0X18,0X0B,0X03,0X01,0X0A,0XFF,
-                    0XF0,0X2B,0X2D,0X01,0X00,0X01,0X03,0X19,0X0C,0X01,0X2C,0X19,0X0D,0X00,0X12,0X00,
-                    0X01,0X03,0X2D,0X1A,0X01,0X0C,0X01,0X2E,0X03,0X2D,0X1E,0X0A,0XFF,0XF0,0X0C,0X01, #2
-                    0X21],
+        'prompt' : [0X08,0X00,0X00,0X00,0X22,0X00,0X00,0X22,0X00,0X00,0X22,0X0C,0X00,0X1F,0X11,0X02,
+                    0X0C,0X02,0X0C,0X03,0X12,0X00,0X0F,0X0C,0X00,0X0C,0X03,0X1D,0X18,0X0B,0X03,0X01,
+                    0X0A,0XFF,0XF0,0X2B,0X2D,0X01,0X00,0X01,0X03,0X19,0X0C,0X01,0X2C,0X19,0X0D,0X00,
+                    0X12,0X00,0X01,0X03,0X2D,0X1A,0X01,0X0C,0X01,0X2E,0X03,0X2D,0X1E,0X0A,0XFF,0XF0,
+                    0X0C,0X01,0X21], #2
 
-      'toRomnum' : [0X0C,0X00,0X3C,0X19,0X0C,0X01,0X2C,0X00,0X01,0X03,0X19,0X0D,0X00,0X12,0X2D,0X1A,
-                    0X01,0X2D,0X0C,0X01,0X2E,0X03,0X1E,0X00,0X01,0X03,0X0A,0XFF,0XF0,0X0C,0X01,0X2E,
-                    0X03,0X1E,0X0C,0X01,0X21], #3
+      'toRomnum' : [0X08,0X00,0X0C,0X00,0X3C,0X19,0X0C,0X01,0X2C,0X00,0X01,0X03,0X19,0X0D,0X00,0X12,
+                    0X2D,0X1A,0X01,0X2D,0X0C,0X01,0X2E,0X03,0X1E,0X00,0X01,0X03,0X0A,0XFF,0XF0,0X0C,
+                    0X01,0X2E,0X03,0X1E,0X0C,0X01,0X21], #3
 
-       'promptn' : [0x08,0x00,0x35,0x08,0x00,0x03,0x01,0x22,0x00,0x00,0x22,0x00,0x00,0x22,0x00,0x00, 
+       'promptn' : [0X08,0X00,0X35,0x08,0x00,0x03,0x01,0x22,0x00,0x00,0x22,0x00,0x00,0x22,0x00,0x00, 
                     0x22,0x0C,0x00,0x1F,0x11,0x02,0x0C,0x02,0x0C,0x03,0x12,0x00,0x0F,0x0C,0x00,0x0C, 
                     0x03,0x1D,0x18,0x0B,0x03,0x01,0x0A,0xFF,0xF0,0x2B,0x2D,0x01,0x00,0x01,0x03,0x19, 
                     0x0C,0x01,0x2C,0x19,0x0D,0x00,0x12,0x00,0x01,0x03,0x2D,0x1A,0x01,0x0C,0x01,0x2E, 
@@ -80,7 +81,11 @@ class compiler():
         self.AST = AST
         self.getTerms(AST)
         self.__compileConsts()
-    
+        self.code = self.__compileStmtLst(self.AST)
+        self.__compileHeap()
+        self.__compileSymbols()
+        return (self.heap,self.symbols,self.lvars,self.code)
+
     def getTerms(self, obj):
         #gets terminal terms. obj is a list of statements
         for stmt in obj:
@@ -126,6 +131,11 @@ class compiler():
         self.heap.append(obj)
         return pos
     
+    def __compileHeap(self):
+        #compiles heap. Only use at the very end
+        newHeap = [(ele[0],bool(ele[1]),ele[2:]) for ele in self.heap]
+        self.heap = newHeap
+
     def __addSymbol(self,obj,type):
         #Adds object to symbols
         #Returns object's position in symbol table
@@ -387,26 +397,71 @@ class compiler():
                     code = [arrCode,arrIndex,arrVal]
                 return code
             case "$ASSIGN_ARR":
-                #TODO: FINISH
+                #TODO: FINISH, add wide support (also add wide support to 0x45 command in MCS)
+                #TODO: Make sure Assign Arr only works with arrays
                 oldArr = stmt[1][1]
                 newArr = stmt[2][1]
-                newCode = self.globalAliases[newArr][scope]
-                self.globalAliases[oldArr][scope] = newCode
-                pass
-            case "DELETE_ELE":
+                oldSymbolIndex = self.globalAliases[oldArr][scope][0]
+                newSymbolIndex = self.globalAliases[newArr][scope][0]
+                newSymbol = self.symbols(newSymbolIndex)
+                return [0x45,oldSymbolIndex,mcs.stack_machine.ref_dict[newSymbol[0]]] + list(mcs.intToBytes(newSymbol[1],size=32))
+            case "$DELETE_ELE":
                 #TODO: FINISH
                 arrName = stmt[1][1]
                 arrIndexCode = self.__compileExpr(stmt[2])
                 arrCode = self.globalAliases(arrName,scope)
                 pass
-            case "APPEND":
+            case "$APPEND":
                 #TODO: Add support for ints and refs
                 arrName = stmt[1][1]
                 arrCode = self.globalAliases(arrName,scope)
                 newEle = self.__compileExpr(stmt[2])
                 return [0x00,0x01,0x00,arrCode,0x34,0x00,arrCode,0x19,0x1f,0x00,0x01,0x03] + newEle + [0x1e]
+            case "$IF":
+                #Constructs if statement
+                #TODO: Test offsets
+                allCode = []
+                for ifStmt in stmt[1:]:
+                    if ifStmt[0] == "ELSE":
+                        #TODO: Increase code limit of ifStmt Else
+                        code = self.__compileStmtLst(ifStmt[1])
+                        clen = len(code)
+                        code = [0x46] + list(mcs.intToBytes(clen + 5,size=32)) + code
+                    else:
+                        code = self.__compileStmtLst(ifStmt[2])
+                        clen = len(code)
+                        if clen > 32740:
+                            remainLen = clen - 32740
+                            remainLenList = mcs.intToBytes(10 + remainLen,size=32)
+                            #Added small buffer to code length
+                            code.insert(32740,0x0a) #Go forward by 6
+                            code.insert(32741,0x00)
+                            code.insert(32742,0x06)
+                            code.insert(32743,0x46)
+                            code.insert(32744,remainLenList[0])
+                            code.insert(32745,remainLenList[1])
+                            code.insert(32746,remainLenList[2])
+                            code.insert(32747,remainLenList[3])
+                            code = self.__compileExpr(ifStmt[1]) + [0x0d,0x7f,0xea] + code
+                        else:
+                            code = self.__compileExpr(ifStmt[1]) + [0x0d] + list(mcs.intToBytes(len(code) + 8,size=16)) + code
 
-    
+                        if ifStmt[0] == "ELIF":
+                            clen = len(code)
+                            code = [0x46] + list(mcs.intToBytes(clen + 5,32)) + code
+                    allCode.extend(code)
+                return allCode
+                    
+
+            
+
+    def __compileStmtLst(self,stmtList,scope='MAIN'):
+        #Compiles statement list
+        code = []
+        for stmt in stmtList:
+            code += self.__compileStmt(stmt)
+        return code
+
     def __processTermSymbols(self):
         #processes terminals and adds them to symbols
         pass
@@ -457,10 +512,35 @@ FINIS ALITER TVNC
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
 
-ap = parser.parse(b)
+ifTest = '''
+IMPERO TIBI
+SI PAR SVMMA NO. III NO. II NO. VII TVNC
+    DICERE 'SALVE MVNDI'
+FINIS SIN PAR SVMMA NO. II NO. III NO. VI TVNC
+    DICERE 'SALVE MVNDI2'
+FINIS ALITER TVNC
+    DICERE 'SALVE MVNDI3'
+FINIS
+FINIS_CIRCVITVS
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
+
+ifCode = '''
+PUSH 02
+PUSH 02
+ADD
+PUSH 04
+EQL
+IFEQ 00 0E
+LREF 01
+LREF 07
+CALL 01'''
+ap = parser.parse(ifTest)
 #print(ap)
 compier = compiler()
-compier.compile(ap)
+apc = compier.compile(ap)
+for ele in apc:
+    print(ele)
+
 print('terminals:',compier.terminals)
 print()
 print('symbols:',compier.symbols)
@@ -472,4 +552,10 @@ print()
 for ele in compier.heap:
     print(ele)
 print(compier.symbols)
+
+print(mcs.stack_machine.decompileInstructions(compier.code))
+exe = mcs.stack_machine()
+exe.initialize(apc[0],apc[1],apc[2],apc[3])
+exe.execute()
+
 #print(compier.processUInt(6554634))

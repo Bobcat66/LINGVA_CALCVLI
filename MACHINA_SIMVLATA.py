@@ -90,7 +90,9 @@ class stack_machine():
         'GTR' : 0x41,
         'LSR' : 0x42,
         'GEQ' : 0x43,
-        'LEQ' : 0x44
+        'LEQ' : 0x44,
+        'ASSIGN' :0x45,
+        'WGOTO' : 0x46
     }
 
     #Dict of instruction offsets, for formatting instructions. Any instruction not listed on the offset dict has an offset of 1
@@ -122,6 +124,8 @@ class stack_machine():
         0x33 : 'Quad',
         0x35 : 5,
         0x38 : 2,
+        0x45 : 7,
+        0x46 : 5,
     }
 
     type_dict = {
@@ -216,10 +220,11 @@ class stack_machine():
         arg4 = self.getFwd(offset+4)
         return ((arg1 << 24) | (arg2 << 16) | (arg3 << 8) | arg4) #converts two bytes into unsigned 32 bit integer
     
-    def decompileOpcode(self,opcode):
+    @classmethod
+    def decompileOpcode(cls,opcode):
         #Decompiles individual opcode
-        key_list = list(self.command_dict.keys())
-        val_list = list(self.command_dict.values())
+        key_list = list(cls.command_dict.keys())
+        val_list = list(cls.command_dict.values())
         index = val_list.index(opcode)
         return key_list[index]
     
@@ -950,10 +955,22 @@ class stack_machine():
                 a = self.stack.pop()
                 self.stack.append(1 if a <= b else 0)
                 return 1
-
-
-
-                
+            case 0x45:
+                #ASSIGN
+                #Assigns symbol
+                #Takes three parameters: the symbol index to be reassigned (1 byte), the new data type (1 byte), and the new symbol (4 bytes)
+                #TODO: Add to wide and quad
+                symbolIndex = self.getFwd(1)
+                symbolType = self.getFwd(2)
+                newSymbol = self.getuInt32(2)
+                self.symbols[symbolIndex] = (symbolType,newSymbol)
+                return 1 + 1 + 1 + 4
+            case 0x46:
+                #WGOTO
+                #Wide GOTO
+                #Takes 1 4-byte parameter: the shift
+                arg1 = UintToInt(self.getuInt32())
+                return arg1
 
 
     def initialize(self,heap,symbols,vars,code):
@@ -971,6 +988,7 @@ class stack_machine():
         #if statement is up here to minimize the number of times the if statement is called
         self.verbose = verbose
         if verbose:
+            print("OPCODES: ", self.frame.opcodes) #Debugging
             while self.frame.pc < len(self.frame.opcodes):
                 opcode = self.frame.opcodes[self.frame.pc]
                 print("Stack:",self.stack)
@@ -1062,6 +1080,37 @@ class stack_machine():
         code = [int(x,base=16) if len(x) == 2 else cls.command_dict[x] for x in precode]
         return (heap,symbols,vars,code)
     
+    @classmethod
+    def decompileInstructions(cls,code):
+        #Decompiles instructions
+        #formats instructions into string
+        instructionPosList = set() #list of indexes of instructions
+        i = 0
+        while i < len(code):
+            instructionPosList.add(i)
+            try:
+                off = cls.offsetDict[code[i]]
+                if off == 'Double':
+                    instructionPosList.add(i)
+                    instructionPosList.add(i+1)
+                    a = cls.offsetDict[code[i+1]]
+                    i += (2 + 2*(a-1))
+                elif off == 'Quad':
+                    instructionPosList.add(i)
+                    instructionPosList.add(i+1)
+                    a = cls.offsetDict[code[i+1]]
+                    i += (2 + 4*(a-1))
+                else:
+                    i += cls.offsetDict[code[i]]
+            except KeyError:
+                i += 1
+        instructions = [cls.decompileOpcode(code[i]) if i in instructionPosList else '%02X' % code[i] for i in range(len(code))]
+        iStr = '['
+        for i in range(len(instructions)):
+            iStr += instructions[i] + ', '
+        iStr = iStr[:-2]
+        iStr += ']'
+        return iStr
     def __str__(self):
 
         symbolstr = ""
@@ -1785,7 +1834,7 @@ RETURN
     #unpack(am)
     ac = exe.compile(promptTest)
     print(exe.compileInstructions(rfunc))
-    print(ac[3])
+    print(ac)
     exe.initialize(ac[0],ac[1],ac[2],ac[3])
     #print(exe)
     print("INIT")
