@@ -988,7 +988,7 @@ class stack_machine():
         #if statement is up here to minimize the number of times the if statement is called
         self.verbose = verbose
         if verbose:
-            print("OPCODES: ", self.frame.opcodes) #Debugging
+            #print("OPCODES: ", self.frame.opcodes) #Debugging
             while self.frame.pc < len(self.frame.opcodes):
                 opcode = self.frame.opcodes[self.frame.pc]
                 print("Stack:",self.stack)

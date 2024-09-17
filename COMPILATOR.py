@@ -146,7 +146,7 @@ class compiler():
 
     def __addVar(self,obj,scope):
         pos = len(self.localVars[scope])
-        self.localVars[scope].append[obj]
+        self.localVars[scope].append(obj)
         return pos
 
     def __compileSymbols(self):
@@ -174,13 +174,15 @@ class compiler():
         #Compiles constants. DOES NOT COMPILE ALIASES
         nums = set()
         for ele in self.terminals['ID']:
-            self.globalAliases[ele] = {}
-            self.localAliases[ele] = {}
+            #TODO: Add global alias support. Also see variable code
+            #self.globalAliases[ele] = {}
+            #self.localAliases[ele] = {}
+            pass
         for ele in self.terminals['NUMBER']:
             nums.add(ele)
         for ele in self.terminals['RATIO']:
             nums.add(ele)
-        print(nums)
+        #print(nums)
 
         for ele in nums:
             pos = self.__addSymbol(ele,"CONST")
@@ -227,12 +229,14 @@ class compiler():
                 idName = expr[1]
                 if idName in self.globalAliases.keys() and idName in self.localAliases.keys():
                     #TODO: raise compiler error here
+                    print(self.globalAliases)
+                    print(self.localAliases)
                     return "ERROR"
                 elif idName in self.globalAliases.keys():
                     code = [0x00,self.globalAliases[idName][scope][0]]
                 elif idName in self.localAliases.keys():
                     #TODO: Add float support
-                    code = [0x00,self.localAliases[idName][scope][0],0x0c]
+                    code = [0x0c,self.localAliases[idName][scope][0]]
 
             #Binary Arithmetic Operators
             case 'ADD':
@@ -273,6 +277,7 @@ class compiler():
             case 'EQUALS':
                 op1 = self.__compileExpr(expr[1])
                 op2 = self.__compileExpr(expr[2])
+                #print(op1,op2)
                 code = op1 + op2 + [0x3f]
             case 'GREATER':
                 op1 = self.__compileExpr(expr[1])
@@ -304,10 +309,10 @@ class compiler():
                 """
                 id = stmt[1][1]
                 type = stmt[2][1]
+                if not id in self.localAliases.keys():
+                    self.localAliases[id] = {}
                 pos = self.__addVar(None,scope)
-                if not scope in self.localAliases[id]:
-                    #TODO: Raise error of some kind
-                    pass
+                print(self.localVars)
                 self.localAliases[id][scope] = (pos,type) #Type is LINGVA_CALCVLI type
                 return [0x00,0x00,0x22]
             case "$ASSIGN_VAR":
@@ -328,6 +333,7 @@ class compiler():
                 val = self.__compileExpr(stmt[2])
                 type = stmt[2][0][1:]
                 alias = self.localAliases[id][scope] #(pos,type)
+                print("Alias: ", alias)
                 if type != alias[1]:
                     #TODO: Raise error of some kind
                     pass
@@ -367,6 +373,8 @@ class compiler():
                 arrSize = self.__compileExpr(stmt[2],scope)
                 arrType = stmt[3][1]
                 pos = self.__addHeap(None,'ARRAY')
+                if arrName not in self.globalAliases.keys():
+                    self.globalAliases[arrName] = {}
                 self.globalAliases[arrName][scope] = pos
                 typeCode = 0x00
                 size = 32
@@ -451,6 +459,16 @@ class compiler():
                             code = [0x46] + list(mcs.intToBytes(clen + 5,32)) + code
                     allCode.extend(code)
                 return allCode
+            case '$WHILE':
+                #Constructs while statement
+                #TODO: Add offset for longer code segments
+                condition = self.__compileExpr(stmt[1])
+                statements = self.__compileStmtLst(stmt[2])
+                statementLen = len(statements)
+                code = condition + [0x0d] + list(mcs.intToBytes(statementLen+6,16)) + statements + [0x0a] + list(mcs.intToBytes(-1*(statementLen+3+len(condition)),16))
+                return code
+                
+
                     
 
             
@@ -515,11 +533,24 @@ CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
 ifTest = '''
 IMPERO TIBI
 SI PAR SVMMA NO. III NO. II NO. VII TVNC
-    DICERE 'SALVE MVNDI'
+    DICERE 'SALVE MVNDI I'
 FINIS SIN PAR SVMMA NO. II NO. III NO. VI TVNC
-    DICERE 'SALVE MVNDI2'
+    DICERE 'SALVE MVNDI II'
+FINIS SIN PAR SVMMA NO. IV NO. II NO. VI TVNC
+    DICERE 'SALVE MVNDI III'
 FINIS ALITER TVNC
-    DICERE 'SALVE MVNDI3'
+    DICERE 'SALVE MVNDI IV'
+FINIS
+FINIS_CIRCVITVS
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
+
+whileTest = '''
+IMPERO TIBI
+DECLARO VARIABLE NVMERVS
+ASSIGNO VARIABLE NO. VI
+DVM NON PAR VARIABLE NO. I TVNC
+    DICERE 'SALVE MVNDI\n'
+    DECREMENTVM VARIABLE
 FINIS
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
@@ -534,12 +565,14 @@ IFEQ 00 0E
 LREF 01
 LREF 07
 CALL 01'''
-ap = parser.parse(ifTest)
+ap = parser.parse(whileTest)
 #print(ap)
 compier = compiler()
 apc = compier.compile(ap)
+'''
 for ele in apc:
     print(ele)
+
 
 print('terminals:',compier.terminals)
 print()
@@ -549,11 +582,13 @@ print('globalAliases:',compier.globalAliases)
 print()
 print('constAliases:',compier.constAliases)
 print()
+
 for ele in compier.heap:
     print(ele)
 print(compier.symbols)
-
+'''
 print(mcs.stack_machine.decompileInstructions(compier.code))
+#print(apc)
 exe = mcs.stack_machine()
 exe.initialize(apc[0],apc[1],apc[2],apc[3])
 exe.execute()
