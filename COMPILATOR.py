@@ -82,6 +82,7 @@ class compiler():
         self.getTerms(AST)
         self.__compileConsts()
         self.code = self.__compileStmtLst(self.AST)
+        #print(self.heap)
         self.__compileHeap()
         self.__compileSymbols()
         return (self.heap,self.symbols,self.lvars,self.code)
@@ -133,7 +134,7 @@ class compiler():
     
     def __compileHeap(self):
         #compiles heap. Only use at the very end
-        newHeap = [(ele[0],bool(ele[1]),ele[2:]) for ele in self.heap]
+        newHeap = [(ele[0],bool(ele[1]),ele[2:]) for ele in self.heap if ele is not None]
         self.heap = newHeap
 
     def __addSymbol(self,obj,type):
@@ -151,6 +152,7 @@ class compiler():
 
     def __compileSymbols(self):
         #Compiles symbol table. Should be done at the very end. TODO: remove placeholder symbols
+        #print(self.symbols)
         newSymbols = [(mcs.stack_machine.ref_dict[ele[0]],ele[1]) for ele in self.symbols]
         self.symbols = newSymbols
 
@@ -296,6 +298,20 @@ class compiler():
                 op2 = self.__compileExpr(expr[2])
                 code = op1 + op2 + [0x44]
             
+            #Arrays
+            case 'RETRIEVE_ELE':
+                #TODO: Add support for floats, and booleans
+                arrname = self.__compileExpr(expr[1])
+                arrPos = self.__compileExpr(expr[2])
+                arrType = self.globalAliases[arrname][scope][1]
+                match arrType:
+                    case "STRING_ARRAY":
+                        code = arrname + arrPos + [0x1d]
+                    case "NUMBER_ARRAY":
+                        code = arrname + arrPos + [0x1d]
+                    case "FLOAT_ARRAY":
+                        code = arrname + arrPos + [0x24]
+            
         return code
 
     def __compileStmt(self,stmt,scope='MAIN'):
@@ -368,14 +384,21 @@ class compiler():
                 code = [0x0f] + list(mcs.intToBytes(varCode[0],size=16)) + [0xff,0xff]
                 return code
             case "$DECLARE_ARR":
-                #TODO: Fix, add variable obj size
+                #TODO: Fix, add variable obj size, add references
                 arrName = stmt[1][1]
                 arrSize = self.__compileExpr(stmt[2],scope)
                 arrType = stmt[3][1]
-                pos = self.__addHeap(None,'ARRAY')
+                match arrType:
+                    #TODO: Add boolean
+                    case 'STRING':
+                        pos = self.__addHeap(None,'RARR')
+                    case 'NUMBER':
+                        pos = self.__addHeap(None,'IARR')
+                    case 'RATIO':
+                        pos = self.__addHeap(None,'FARR')
                 if arrName not in self.globalAliases.keys():
                     self.globalAliases[arrName] = {}
-                self.globalAliases[arrName][scope] = pos
+                self.globalAliases[arrName][scope] = (pos,arrType+"_ARRAY")
                 typeCode = 0x00
                 size = 32
                 match arrType:
@@ -391,18 +414,24 @@ class compiler():
                     case 'BOOLEAN':
                         typeCode = 0x0c
                         size=8
-                return arrSize + [0x00,typeCode,0x00,0x00,0x00,size,0x3e]
+                #return arrSize + [0x00,typeCode,0x00,0x00,0x00,size,0x3e]
+                return []
             case "$EDIT_ARR":
                 #TODO: Add wide support, fix
-                arrName = self.__compileExpr(stmt[1],scope)
-                arrIndex = self.__compileExpr(stmt[2],scope)
-                arrVal = self.__compileExpr(stmt[3],scope)
+                arrNameCode = self.__compileExpr(stmt[1],scope)
+                #print(arrNameCode)
+                arrIndexCode = self.__compileExpr(stmt[2],scope)
+                arrValCode = self.__compileExpr(stmt[3],scope)
                 code = []
-                arrCode = self.globalAliases[arrName][scope]
-                if isinstance(arrVal,int):
-                    code = [0x1e,arrCode,arrIndex,arrVal]
-                elif isinstance(arrVal,float):
-                    code = [arrCode,arrIndex,arrVal]
+                arrCode = self.globalAliases[stmt[1][1]][scope][0]
+                #print(stmt[3][1])
+                if isinstance(stmt[3][1],int):
+                    code = [0x1e,arrCode,arrIndexCode,arrValCode]
+                elif isinstance(stmt[3][1],float):
+                    code = [arrCode,arrIndexCode,arrValCode]
+                else:
+                    print("Arrindcod", arrIndexCode)
+                    code = [0x1e] + [arrCode] + arrIndexCode + arrValCode
                 return code
             case "$ASSIGN_ARR":
                 #TODO: FINISH, add wide support (also add wide support to 0x45 command in MCS)
@@ -555,6 +584,19 @@ FINIS
 FINIS_CIRCVITVS
 CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM'''
 
+arrTest = '''
+IMPERO TIBI
+ORDO_DECLARO ARRAY NO. V SCRIPTVM
+DECLARO COVNTER NVMERVS
+ASSIGNO COVNTER NO. I
+ORDO_IMMVTO ARRAY NO. I 'SALVE MVNDI I'
+ORDO_IMMVTO ARRAY NO. II 'SALVE MVNDI II'
+ORDO_IMMVTO ARRAY NO. III 'SALVE MVNDI III'
+ORDO_IMMVTO ARRAY NO. IV 'SALVE MVNDI IV'
+ORDO_IMMVTO ARRAY NO. V 'SALVE MVNDI V'
+CETERVM AVTEM CENSEO CARTHAGINEM ESSE DELENDAM
+    '''
+
 ifCode = '''
 PUSH 02
 PUSH 02
@@ -565,7 +607,7 @@ IFEQ 00 0E
 LREF 01
 LREF 07
 CALL 01'''
-ap = parser.parse(whileTest)
+ap = parser.parse(arrTest)
 #print(ap)
 compier = compiler()
 apc = compier.compile(ap)
@@ -587,10 +629,12 @@ for ele in compier.heap:
     print(ele)
 print(compier.symbols)
 '''
+print(compier.code)
 print(mcs.stack_machine.decompileInstructions(compier.code))
 #print(apc)
 exe = mcs.stack_machine()
 exe.initialize(apc[0],apc[1],apc[2],apc[3])
 exe.execute()
+print(exe)
 
 #print(compier.processUInt(6554634))
